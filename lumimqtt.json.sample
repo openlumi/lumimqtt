@@ -1,0 +1,5 @@
+{
+    "mqtt_host": "localhost",
+    "mqtt_user": "",
+    "mqtt_password": ""
+}

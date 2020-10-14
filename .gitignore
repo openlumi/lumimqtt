@@ -1,0 +1,6 @@
+.venv
+.idea
+lumimqtt.json
+build
+dist
+*.egg-info
