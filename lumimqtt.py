@@ -10,7 +10,7 @@ import aio_mqtt
 
 logger = logging.getLogger(__name__)
 
-VERSION = '1.0.0'
+VERSION = '1.0.1'
 
 illuminance_dev = '/sys/bus/iio/devices/iio:device0/in_voltage5_raw'
 button_dev = '/dev/input/event0'
@@ -95,7 +95,7 @@ class Light(Device):
             ('g', self.led_g),
             ('b', self.led_b),
         ]:
-            pwm_value = int((color[c] * 100 / 255) * brightness/255)
+            pwm_value = int((color[c] * 100 / 255) * brightness / 255)
             if state.lower() == 'off':
                 pwm_value = 0
             if not (0 <= pwm_value <= 100):
@@ -122,8 +122,9 @@ class IlluminanceSensor(Sensor):
         with open(self.device, 'r') as f:
             data = f.read()[:-1]
             try:
-                new_value = int(int(data)*self.COEFFICIENT)
+                new_value = int(int(data) * self.COEFFICIENT)
                 self.updated = (new_value != self._previous_value)
+                self._previous_value = new_value
                 return new_value
             except ValueError:
                 return data
