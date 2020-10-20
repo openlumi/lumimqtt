@@ -19,8 +19,15 @@ The configuration file is a JSON with the following content:
     "mqtt_host": "localhost",
     "mqtt_port": 1883,
     "mqtt_user": "",
-    "mqtt_password": ""
+    "mqtt_password": "",
+    "sensor_threshold": 50,
+    "sensor_debounce_period": 60
 }
 ```
 Every line is optional. By default LumiMQTT will use the connection
 to localhost with the anonymous login.
+
+`sensor_threshold` is a threshold to avoid sending data to MQTT on small 
+changes
+
+`sensor_debounce_period` value in seconds to send data despite of the threshold

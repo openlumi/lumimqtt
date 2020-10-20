@@ -1,4 +1,6 @@
 import asyncio as aio
+from dataclasses import dataclass
+from datetime import datetime
 import json
 import logging
 import os
@@ -10,7 +12,7 @@ import aio_mqtt
 
 logger = logging.getLogger(__name__)
 
-VERSION = '1.0.1'
+VERSION = '1.0.2'
 
 illuminance_dev = '/sys/bus/iio/devices/iio:device0/in_voltage5_raw'
 button_dev = '/dev/input/event0'
@@ -23,6 +25,12 @@ SUBTOPIC_ILLUMINANCE = 'illuminance'
 SUBTOPIC_LIGHT = 'light'
 
 
+@dataclass
+class DebounceSensor:
+    value: ty.Any
+    last_sent: datetime
+
+
 class Device:
     MQTT_VALUES = None
 
@@ -33,11 +41,6 @@ class Device:
 
 
 class Sensor(Device):
-    def __init__(self, device, name, topic):
-        super().__init__(device, name, topic)
-        self._previous_value = None
-        self.updated = None
-
     def get_value(self):
         raise NotImplementedError()
 
@@ -122,10 +125,7 @@ class IlluminanceSensor(Sensor):
         with open(self.device, 'r') as f:
             data = f.read()[:-1]
             try:
-                new_value = int(int(data) * self.COEFFICIENT)
-                self.updated = (new_value != self._previous_value)
-                self._previous_value = new_value
-                return new_value
+                return int(int(data) * self.COEFFICIENT)
             except ValueError:
                 return data
 
@@ -140,12 +140,18 @@ class LumiMqtt:
             user: ty.Optional[str] = None,
             password: ty.Optional[str] = None,
             reconnection_interval: int = 10,
+            *,
+            sensor_threshold: int,
+            sensor_debounce_period: int,
             loop: ty.Optional[aio.AbstractEventLoop] = None
     ) -> None:
         self._mqtt_host = host
         self._mqtt_port = port
         self._mqtt_user = user
         self._mqtt_password = password
+
+        self._sensor_threshold = sensor_threshold
+        self._sensor_debounce_period = sensor_debounce_period
 
         self._reconnection_interval = reconnection_interval
         self._loop = loop or aio.get_event_loop()
@@ -156,6 +162,8 @@ class LumiMqtt:
         self.sensors: ty.List[Sensor] = []
         self.lights: ty.List[Light] = []
         self.buttons: ty.List[Button] = []
+
+        self._debounce_sensors: ty.Dict[Sensor, DebounceSensor] = {}
 
     def start(self):
         self._tasks = [
@@ -348,7 +356,21 @@ class LumiMqtt:
             for sensor in self.sensors:
                 try:
                     value = sensor.get_value()
-                    if sensor.updated:
+                    debounce_val = self._debounce_sensors.get(sensor)
+                    should_send = (
+                        debounce_val is None or
+                        abs(value - debounce_val.value) >=
+                        self._sensor_threshold or
+                        (
+                            datetime.now() - debounce_val.last_sent
+                        ).seconds >= self._sensor_debounce_period
+                    )
+
+                    if should_send:
+                        self._debounce_sensors[sensor] = DebounceSensor(
+                            value=value,
+                            last_sent=datetime.now(),
+                        )
                         await self._client.publish(
                             aio_mqtt.PublishableMessage(
                                 topic_name=self._get_topic(sensor.topic),
@@ -460,6 +482,8 @@ if __name__ == '__main__':
     config = {
         'mqtt_host': 'localhost',
         'mqtt_port': 1883,
+        'sensor_threshold': 50,  # 5% of illuminance sensor
+        'sensor_debounce_period': 60,  # 1 minute
         **config,
     }
 
@@ -470,6 +494,8 @@ if __name__ == '__main__':
         port=config['mqtt_port'],
         user=config.get('mqtt_user'),
         password=config.get('mqtt_password'),
+        sensor_threshold=int(config['sensor_threshold']),
+        sensor_debounce_period=int(config['sensor_debounce_period']),
     )
     server.register(IlluminanceSensor(
         device=illuminance_dev,

@@ -7,7 +7,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name='lumimqtt',
-    version='1.0.1',
+    version='1.0.2',
     description='Xiaomi Lumi Gateway MQTT integration',
     long_description=long_description,
     long_description_content_type="text/markdown",
