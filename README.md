@@ -3,7 +3,7 @@
 The service allow controlling gateway LEDs. sound and illuminance 
 sensor over MQTT
 
-# Installation:
+## Installation:
 
 opkg update
 
@@ -11,7 +11,7 @@ opkg install python3-pip python3-asyncio python3-evdev
 
 pip install lumimqtt
 
-
+## Config:
 Default config should be located in `/etc/lumimqtt.json` or 
 can be overridden with `LUMIMQTT_CONFIG` environment variable.
 
@@ -35,15 +35,15 @@ changes
 
 `sensor_debounce_period` value in seconds to send data despite of the threshold
 
-Example run command:
+## Example run command:
 
 $ lumimqtt
 
-or (in background):
+### or (in background):
 
 $ lumimqtt &
 
-
+## To autorun:
 To autorun lumimqtt you need a file
  /etc/init.d/lumimqtt
 
