@@ -289,7 +289,6 @@ class LumiMqtt:
                         **get_generic_vals(sensor.name),
                         **(sensor.MQTT_VALUES or {}),
                         'state_topic': self._get_topic(sensor.topic),
-                        'value_template': f'{{{{ value_json.{sensor.name} }}}}',
                     }),
                     qos=aio_mqtt.QOSLevel.QOS_1,
                     retain=True,
@@ -384,7 +383,7 @@ class LumiMqtt:
                         await self._client.publish(
                             aio_mqtt.PublishableMessage(
                                 topic_name=self._get_topic(sensor.topic),
-                                payload=json.dumps({sensor.name: value}),
+                                payload=value,
                                 qos=aio_mqtt.QOSLevel.QOS_1
                             )
                         )
