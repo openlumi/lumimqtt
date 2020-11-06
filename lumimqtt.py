@@ -459,11 +459,14 @@ class LumiMqtt:
             except aio_mqtt.AccessRefusedError as e:
                 logger.error("Access refused", exc_info=e)
 
-            except aio_mqtt.ConnectionLostError as e:
+            except (
+                aio_mqtt.ConnectionLostError,
+                aio_mqtt.ConnectFailedError,
+                aio_mqtt.ServerDiedError,
+            ) as e:
                 logger.error(
                     "Connection lost. Will retry in %d seconds",
                     self._reconnection_interval,
-                    exc_info=e,
                 )
                 await aio.sleep(self._reconnection_interval, loop=self._loop)
 
