@@ -131,10 +131,10 @@ class IlluminanceSensor(Sensor):
 
 
 class LumiMqtt:
-    TOPIC_ROOT = 'lumi'
-
     def __init__(
             self,
+            dev_id: str,
+            topic_root: str,
             host: str,
             port: int = None,
             user: ty.Optional[str] = None,
@@ -145,6 +145,8 @@ class LumiMqtt:
             sensor_debounce_period: int,
             loop: ty.Optional[aio.AbstractEventLoop] = None
     ) -> None:
+        self.dev_id = dev_id
+        self._topic_root = topic_root
         self._mqtt_host = host
         self._mqtt_port = port
         self._mqtt_user = user
@@ -158,7 +160,6 @@ class LumiMqtt:
         self._client = aio_mqtt.Client(loop=self._loop)
         self._tasks = []
 
-        self.dev_id = hex(get_mac())
         self.sensors: ty.List[Sensor] = []
         self.lights: ty.List[Light] = []
         self.buttons: ty.List[Button] = []
@@ -201,7 +202,7 @@ class LumiMqtt:
             raise NotImplementedError()
 
     def _get_topic(self, subtopic):
-        return f'{self.TOPIC_ROOT}/{self.dev_id}/{subtopic}'
+        return f'{self._topic_root}/{subtopic}'
 
     @property
     def subscribed_topics(self):
@@ -210,7 +211,7 @@ class LumiMqtt:
 
     async def _handle_messages(self) -> None:
         async for message in self._client.delivered_messages(
-                f'{self.TOPIC_ROOT}/#'
+                f'{self._topic_root}/#'
         ):
             while True:
                 if message.topic_name not in self.subscribed_topics:
@@ -479,7 +480,9 @@ if __name__ == '__main__':
         except Exception:
             pass
 
+    dev_id = hex(get_mac())
     config = {
+        'topic_root': 'lumi/{MAC}',
         'mqtt_host': 'localhost',
         'mqtt_port': 1883,
         'sensor_threshold': 50,  # 5% of illuminance sensor
@@ -490,6 +493,8 @@ if __name__ == '__main__':
     server = LumiMqtt(
         reconnection_interval=10,
         loop=loop,
+        dev_id=dev_id,
+        topic_root=config['topic_root'].replace('{MAC}', dev_id),
         host=config['mqtt_host'],
         port=config['mqtt_port'],
         user=config.get('mqtt_user'),
