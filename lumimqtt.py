@@ -147,10 +147,18 @@ class LumiMqtt:
     ) -> None:
         self.dev_id = dev_id
         self._topic_root = topic_root
+        self._topic_lwt = f'{topic_root}/status'
         self._mqtt_host = host
         self._mqtt_port = port
         self._mqtt_user = user
         self._mqtt_password = password
+
+        self._will_message = aio_mqtt.PublishableMessage(
+            topic_name=self._topic_lwt,
+            payload='offline',
+            qos=aio_mqtt.QOSLevel.QOS_1,
+            retain=True,
+        )
 
         self._sensor_threshold = sensor_threshold
         self._sensor_debounce_period = sensor_debounce_period
@@ -266,6 +274,7 @@ class LumiMqtt:
                 'name': f'{name}_{self.dev_id}',
                 'unique_id': f'{name}_{self.dev_id}',
                 'device': device,
+                'availability_topic': self._topic_lwt,
             }
 
         # set sensors config
@@ -424,8 +433,17 @@ class LumiMqtt:
                     port=self._mqtt_port,
                     username=self._mqtt_user,
                     password=self._mqtt_password,
+                    will_message=self._will_message,
                 )
                 logger.info("Connected")
+
+                await self._client.publish(
+                    aio_mqtt.PublishableMessage(
+                        topic_name=self._topic_lwt,
+                        payload='online',
+                        qos=aio_mqtt.QOSLevel.QOS_1,
+                    )
+                ),
 
                 await self._client.subscribe(*[
                     (t, aio_mqtt.QOSLevel.QOS_1)
