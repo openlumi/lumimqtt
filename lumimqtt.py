@@ -441,6 +441,7 @@ class LumiMqtt:
                         topic_name=self._topic_lwt,
                         payload='online',
                         qos=aio_mqtt.QOSLevel.QOS_1,
+                        retain=True,
                     )
                 ),
 
