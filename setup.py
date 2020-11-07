@@ -7,7 +7,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name='lumimqtt',
-    version='1.0.3',
+    version='1.0.4',
     description='Xiaomi Lumi Gateway MQTT integration',
     long_description=long_description,
     long_description_content_type="text/markdown",
@@ -17,7 +17,7 @@ setup(
     scripts=['lumimqtt'],
     py_modules=['lumimqtt'],
     install_requires=[
-        'evdev>=1.3.0',
+        'evdev>=1.0.0',
         'aio-mqtt>=0.2.0',
     ],
     classifiers=[

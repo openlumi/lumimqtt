@@ -12,7 +12,7 @@ import aio_mqtt
 
 logger = logging.getLogger(__name__)
 
-VERSION = '1.0.3'
+VERSION = '1.0.4'
 
 illuminance_dev = '/sys/bus/iio/devices/iio:device0/in_voltage5_raw'
 button_dev = '/dev/input/event0'
