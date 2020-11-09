@@ -5,11 +5,9 @@ sensor over MQTT
 
 ## Installation:
 
-opkg update
-
-opkg install python3-pip python3-asyncio python3-evdev
-
-pip install lumimqtt
+    opkg update 
+    opkg install python3-pip python3-asyncio python3-evdev
+    pip install lumimqtt
 
 ## Config:
 Default config should be located in `/etc/lumimqtt.json` or 
@@ -45,19 +43,13 @@ $ lumimqtt &
 
 ## To autorun:
 To autorun lumimqtt you need a file 
- /etc/init.d/lumimqtt with the following content:
+ **/etc/init.d/lumimqtt** with the following content:
 
-#!/bin/sh /etc/rc.common
-
-START=98
-
-USE_PROCD=1
-
-start_service()
-
-{
-	
-
+    #!/bin/sh /etc/rc.common
+    START=98
+    USE_PROCD=1
+    start_service()
+    {
 	procd_open_instance
 
 	procd_set_param env LUMIMQTT_CONFIG=/etc/lumimqtt.json
@@ -65,4 +57,4 @@ start_service()
 	procd_set_param stdout 1
 	procd_set_param stderr 1
 	procd_close_instance
-}
+	}
