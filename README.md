@@ -9,6 +9,10 @@ sensor over MQTT
     opkg install python3-pip python3-asyncio python3-evdev
     pip install lumimqtt
 
+## For Update:
+
+    pip install lumimqtt --upgrade
+
 ## Config:
 Default config should be located in `/etc/lumimqtt.json` or 
 can be overridden with `LUMIMQTT_CONFIG` environment variable.
