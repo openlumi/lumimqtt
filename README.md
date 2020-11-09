@@ -47,10 +47,10 @@ $ lumimqtt &
 To autorun lumimqtt you need a file
  /etc/init.d/lumimqtt
 
-```json"
 #!/bin/sh /etc/rc.common
 
 START=98
+
 USE_PROCD=1
 
 start_service()
@@ -65,11 +65,3 @@ start_service()
 	procd_close_instance
 
 }
-
-```
-
-
-
-
-
-
