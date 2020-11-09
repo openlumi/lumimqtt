@@ -44,8 +44,8 @@ $ lumimqtt
 $ lumimqtt &
 
 ## To autorun:
-To autorun lumimqtt you need a file
- /etc/init.d/lumimqtt
+To autorun lumimqtt you need a file 
+ /etc/init.d/lumimqtt with the following content:
 
 #!/bin/sh /etc/rc.common
 
@@ -54,7 +54,9 @@ START=98
 USE_PROCD=1
 
 start_service()
+
 {
+	
 
 	procd_open_instance
 
@@ -63,5 +65,4 @@ start_service()
 	procd_set_param stdout 1
 	procd_set_param stderr 1
 	procd_close_instance
-
 }
