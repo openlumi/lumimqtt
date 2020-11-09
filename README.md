@@ -3,7 +3,7 @@
 The service allow controlling gateway LEDs. sound and illuminance 
 sensor over MQTT
 
-## Installation:
+## Installation (for OpenWrt):
 
     opkg update 
     opkg install python3-pip python3-asyncio python3-evdev
