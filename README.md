@@ -54,11 +54,11 @@ To autorun lumimqtt you need a file
     USE_PROCD=1
     start_service()
     {
-	procd_open_instance
+		procd_open_instance
 
-	procd_set_param env LUMIMQTT_CONFIG=/etc/lumimqtt.json
-	procd_set_param command python -m lumimqtt
-	procd_set_param stdout 1
-	procd_set_param stderr 1
-	procd_close_instance
+		procd_set_param env LUMIMQTT_CONFIG=/etc/lumimqtt.json
+		procd_set_param command python -m lumimqtt
+		procd_set_param stdout 1
+		procd_set_param stderr 1
+		procd_close_instance
 	}
