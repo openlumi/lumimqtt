@@ -33,14 +33,14 @@ The configuration file is a JSON with the following content:
 Every line is optional. By default LumiMQTT will use the connection
 to localhost with the anonymous login.
 
-The topic name `topic_root` can be redefined, for example `living_room/gateway`.
-
-If not set, default topic name **lumi/mac_id**
-
 `sensor_threshold` is a threshold to avoid sending data to MQTT on small 
 changes
 
 `sensor_debounce_period` value in seconds to send data despite of the threshold
+
+The topic name `topic_root` can be redefined, for example `living_room/gateway`.
+
+If not set, default topic name **lumi/mac_id**
 
 ## Example run command:
 
