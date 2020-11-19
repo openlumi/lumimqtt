@@ -1,5 +1,7 @@
 # MQTT agent for Xiaomi Lumi gateway
 
+## Description
+
 The service allow controlling gateway LEDs. sound and illuminance 
 sensor over MQTT
 
@@ -34,3 +36,56 @@ to localhost with the anonymous login.
 changes
 
 `sensor_debounce_period` value in seconds to send data despite of the threshold
+
+
+## OpenWrt installation
+
+```sh 
+opkg update 
+opkg install python3-pip python3-asyncio python3-evdev
+pip install -U lumimqtt
+```
+
+To upgrade you can just run
+
+```sh
+pip install -U lumimqtt
+```
+
+## Example run command:
+
+```sh
+lumimqtt
+```
+
+### or (in background):
+
+```sh
+lumimqtt &
+```
+
+### Autorun:
+To run lumimqtt on start you need a file 
+ **/etc/init.d/lumimqtt** with the following content:
+
+```sh
+#!/bin/sh /etc/rc.common
+START=98
+USE_PROCD=1
+start_service()
+{
+    procd_open_instance
+
+    procd_set_param env LUMIMQTT_CONFIG=/etc/lumimqtt.json
+    procd_set_param command python -m lumimqtt
+    procd_set_param stdout 1
+    procd_set_param stderr 1
+    procd_close_instance
+}
+```
+
+To install this file on the gateway you can run
+
+```sh
+wget https://raw.githubusercontent.com/openlumi/lumimqtt/main/init.d/lumimqtt -O /etc/init.d/lumimqtt 
+```
