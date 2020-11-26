@@ -174,13 +174,25 @@ class LumiMqtt:
 
         self._debounce_sensors: ty.Dict[Sensor, DebounceSensor] = {}
 
-    def start(self):
+    async def start(self):
         self._tasks = [
             self._loop.create_task(self._connect_forever()),
             self._loop.create_task(self._handle_messages()),
             self._loop.create_task(self._periodic_publish()),
             self._loop.create_task(self._handle_buttons()),
         ]
+        finished, unfinished = await aio.wait(
+            self._tasks,
+            return_when=aio.FIRST_COMPLETED,
+        )
+        for t in unfinished:
+            t.cancel()
+            try:
+                await t
+            except aio.CancelledError:
+                pass
+        for t in finished:
+            t.result()
 
     async def close(self) -> None:
         for task in self._tasks:
@@ -394,10 +406,21 @@ class LumiMqtt:
             await aio.sleep(period)
 
     async def _handle_buttons(self):
-        for button in self.buttons:
-            self._tasks.append(
-                aio.create_task(button.handle(self._handle_click)),
-            )
+        finished, unfinished = await aio.wait(
+            [
+                aio.create_task(button.handle(self._handle_click))
+                for button in self.buttons
+            ],
+            return_when=aio.FIRST_COMPLETED,
+        )
+        for t in unfinished:
+            t.cancel()
+            try:
+                await t
+            except aio.CancelledError:
+                pass
+        for t in finished:
+            t.result()
 
     async def _handle_click(self, button: Button):
         await aio.gather(
@@ -458,7 +481,7 @@ class LumiMqtt:
 
             except aio_mqtt.AccessRefusedError as e:
                 logger.error("Access refused", exc_info=e)
-
+                raise
             except (
                 aio_mqtt.ConnectionLostError,
                 aio_mqtt.ConnectFailedError,
@@ -468,7 +491,7 @@ class LumiMqtt:
                     "Connection lost. Will retry in %d seconds",
                     self._reconnection_interval,
                 )
-                await aio.sleep(self._reconnection_interval, loop=self._loop)
+                await aio.sleep(self._reconnection_interval)
 
             except aio_mqtt.ConnectionCloseForcedError as e:
                 logger.error("Connection close forced", exc_info=e)
@@ -539,10 +562,9 @@ if __name__ == '__main__':
         name='light',
         topic=SUBTOPIC_LIGHT,
     ))
-    server.start()
 
     try:
-        loop.run_forever()
+        loop.run_until_complete(server.start())
     except KeyboardInterrupt:
         pass
 
