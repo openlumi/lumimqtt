@@ -1,18 +1,18 @@
 import asyncio as aio
-from dataclasses import dataclass
-from datetime import datetime
 import json
 import logging
 import os
 import typing as ty
+from dataclasses import dataclass
+from datetime import datetime
 from uuid import getnode as get_mac
 
-from evdev import InputDevice, categorize, KeyEvent, ecodes  # noqa
 import aio_mqtt
+from evdev import InputDevice, KeyEvent, categorize, ecodes  # noqa
 
 logger = logging.getLogger(__name__)
 
-VERSION = '1.0.4'
+VERSION = '1.0.5'
 
 illuminance_dev = '/sys/bus/iio/devices/iio:device0/in_voltage5_raw'
 button_dev = '/dev/input/event0'
@@ -110,7 +110,7 @@ class Light(Device):
         self.state = {
             'state': state,
             'brightness': brightness,
-            'color': color
+            'color': color,
         }
 
 
@@ -143,7 +143,7 @@ class LumiMqtt:
             *,
             sensor_threshold: int,
             sensor_debounce_period: int,
-            loop: ty.Optional[aio.AbstractEventLoop] = None
+            loop: ty.Optional[aio.AbstractEventLoop] = None,
     ) -> None:
         self.dev_id = dev_id
         self._topic_root = topic_root
@@ -231,7 +231,7 @@ class LumiMqtt:
 
     async def _handle_messages(self) -> None:
         async for message in self._client.delivered_messages(
-                f'{self._topic_root}/#'
+                f'{self._topic_root}/#',
         ):
             while True:
                 if message.topic_name not in self.subscribed_topics:
@@ -256,8 +256,8 @@ class LumiMqtt:
                         aio_mqtt.PublishableMessage(
                             topic_name=self._get_topic(light.topic),
                             payload=json.dumps(light.state),
-                            qos=aio_mqtt.QOSLevel.QOS_1
-                        )
+                            qos=aio_mqtt.QOSLevel.QOS_1,
+                        ),
                     )
                 except aio_mqtt.ConnectionClosedError as e:
                     logger.error("Connection closed", exc_info=e)
@@ -396,8 +396,8 @@ class LumiMqtt:
                             aio_mqtt.PublishableMessage(
                                 topic_name=self._get_topic(sensor.topic),
                                 payload=value,
-                                qos=aio_mqtt.QOSLevel.QOS_1
-                            )
+                                qos=aio_mqtt.QOSLevel.QOS_1,
+                            ),
                         )
                 except aio_mqtt.ConnectionClosedError as e:
                     logger.error("Connection closed", exc_info=e)
@@ -429,14 +429,14 @@ class LumiMqtt:
                     topic_name=self._get_topic(button.topic),
                     payload=json.dumps({'action': 'single'}),
                     qos=aio_mqtt.QOSLevel.QOS_1,
-                )
+                ),
             ),
             self._client.publish(
                 aio_mqtt.PublishableMessage(
                     topic_name=self._get_topic(f'{button.topic}/action'),
                     payload='single',
                     qos=aio_mqtt.QOSLevel.QOS_1,
-                )
+                ),
             ),
         )
         await self._client.publish(
@@ -444,8 +444,8 @@ class LumiMqtt:
                 topic_name=self._get_topic(button.topic),
                 payload=json.dumps({'action': ''}),
                 qos=aio_mqtt.QOSLevel.QOS_1,
-            )
-        ),
+            ),
+        )
 
     async def _connect_forever(self) -> None:
         while True:
@@ -465,8 +465,8 @@ class LumiMqtt:
                         payload='online',
                         qos=aio_mqtt.QOSLevel.QOS_1,
                         retain=True,
-                    )
-                ),
+                    ),
+                )
 
                 await self._client.subscribe(*[
                     (t, aio_mqtt.QOSLevel.QOS_1)
@@ -486,7 +486,7 @@ class LumiMqtt:
                 aio_mqtt.ConnectionLostError,
                 aio_mqtt.ConnectFailedError,
                 aio_mqtt.ServerDiedError,
-            ) as e:
+            ):
                 logger.error(
                     "Connection lost. Will retry in %d seconds",
                     self._reconnection_interval,
@@ -510,9 +510,7 @@ class LumiMqtt:
 
 
 if __name__ == '__main__':
-    logging.basicConfig(
-        level='DEBUG'
-    )
+    logging.basicConfig(level='INFO')
     loop = aio.new_event_loop()
 
     os.environ.setdefault('LUMIMQTT_CONFIG', '/etc/lumimqtt.json')
