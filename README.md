@@ -43,13 +43,13 @@ changes
 ```sh 
 opkg update 
 opkg install python3-pip python3-asyncio python3-evdev
-pip install -U lumimqtt
+pip3 install -U lumimqtt
 ```
 
 To upgrade you can just run
 
 ```sh
-pip install -U lumimqtt
+pip3 install -U lumimqtt
 ```
 
 ## Example run command:
