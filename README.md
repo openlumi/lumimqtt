@@ -77,7 +77,7 @@ start_service()
     procd_open_instance
 
     procd_set_param env LUMIMQTT_CONFIG=/etc/lumimqtt.json
-    procd_set_param command python -m lumimqtt
+    procd_set_param command python3 -m lumimqtt
     procd_set_param stdout 1
     procd_set_param stderr 1
     procd_close_instance
@@ -87,5 +87,8 @@ start_service()
 To install this file on the gateway you can run
 
 ```sh
-wget https://raw.githubusercontent.com/openlumi/lumimqtt/main/init.d/lumimqtt -O /etc/init.d/lumimqtt 
+wget https://raw.githubusercontent.com/openlumi/lumimqtt/main/init.d/lumimqtt -O /etc/init.d/lumimqtt
+chmod +x /etc/init.d/lumimqtt
+/etc/init.d/lumimqtt enable
+/etc/init.d/lumimqtt start
 ```
