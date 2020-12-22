@@ -14,12 +14,14 @@ setup(
     author='Ivan Belokobylskiy',
     author_email='belokobylskij@gmail.com',
     url='https://github.com/openlumi/lumimqtt/',
-    scripts=['lumimqtt'],
-    py_modules=['lumimqtt'],
     install_requires=[
         'evdev>=1.0.0',
         'aio-mqtt>=0.2.0',
     ],
+    packages=['lumimqtt'],
+    entry_points={
+        'console_scripts': ['lumimqtt=lumimqtt.lumimqtt:main'],
+    },
     classifiers=[
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
