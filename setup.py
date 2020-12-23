@@ -22,7 +22,7 @@ setup(
     ],
     packages=['lumimqtt'],
     entry_points={
-        'console_scripts': ['lumimqtt=lumimqtt.lumimqtt:main'],
+        'console_scripts': ['lumimqtt=lumimqtt.__main__:main'],
     },
     classifiers=[
         'Programming Language :: Python :: 3.5',
