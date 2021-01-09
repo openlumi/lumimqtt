@@ -4,6 +4,7 @@ import logging
 import typing as ty
 from dataclasses import dataclass
 from datetime import datetime
+from subprocess import DEVNULL, CalledProcessError, run
 
 import aio_mqtt
 from evdev import InputDevice, KeyEvent, categorize, ecodes  # noqa
@@ -100,6 +101,36 @@ class Light(Device):
             'brightness': brightness,
             'color': color,
         }
+
+
+class BinarySensor(Sensor):
+    MQTT_VALUES = {}
+
+    def __init__(self, gpio, name, topic, device_class=None):
+        device = f"/sys/class/gpio/gpio{gpio}/value"
+        super().__init__(device, name, topic)
+        if device_class:
+            self.MQTT_VALUES['device_class'] = device_class
+        try:
+            run(
+                ['tee', '/sys/class/gpio/export'],
+                stdout=DEVNULL,
+                input=str(gpio).encode(),
+                check=True,
+            )
+            run(
+                ['tee', f'/sys/class/gpio/gpio{gpio}/direction'],
+                stdout=DEVNULL,
+                input='in'.encode(),
+                check=True,
+            )
+        except CalledProcessError as err:
+            logger.error(f"Can not setup {name} sensor: {err.stdout}")
+
+
+    def get_value(self):
+        with open(self.device, 'r') as f:
+            return 'OFF' if f.read()[:-1] == '0' else 'ON'
 
 
 class IlluminanceSensor(Sensor):
@@ -284,8 +315,9 @@ class LumiMqtt:
             await self._client.publish(
                 aio_mqtt.PublishableMessage(
                     topic_name=(
-                        f'homeassistant/sensor/{self.dev_id}/'
-                        f'{sensor.topic}/config'
+                        f'homeassistant/'
+                        f"{'binary_' if self._is_binary(sensor) else ''}sensor"
+                        f'/{self.dev_id}/{sensor.topic}/config'
                     ),
                     payload=json.dumps({
                         **get_generic_vals(sensor.name),
@@ -368,14 +400,19 @@ class LumiMqtt:
                 try:
                     value = sensor.get_value()
                     debounce_val = self._debounce_sensors.get(sensor)
-                    should_send = (
-                        debounce_val is None or
-                        abs(value - debounce_val.value) >=
-                        self._sensor_threshold or
-                        (
-                            datetime.now() - debounce_val.last_sent
-                        ).seconds >= self._sensor_debounce_period
-                    )
+                    if self._is_binary(sensor):
+                        should_send = (
+                            debounce_val is None or value != debounce_val.value
+                        )
+                    else:
+                        should_send = (
+                            debounce_val is None or
+                            abs(value - debounce_val.value) >=
+                            self._sensor_threshold or
+                            (
+                                datetime.now() - debounce_val.last_sent
+                            ).seconds >= self._sensor_debounce_period
+                        )
 
                     if should_send:
                         self._debounce_sensors[sensor] = DebounceSensor(
@@ -498,3 +535,7 @@ class LumiMqtt:
             else:
                 logger.info("Disconnected")
                 return
+
+    @staticmethod
+    def _is_binary(sensor):
+        return isinstance(sensor, BinarySensor)
