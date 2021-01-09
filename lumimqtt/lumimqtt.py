@@ -4,6 +4,7 @@ import logging
 import typing as ty
 from dataclasses import dataclass
 from datetime import datetime
+from os.path import exists
 from subprocess import DEVNULL, CalledProcessError, run
 
 import aio_mqtt
@@ -111,22 +112,22 @@ class BinarySensor(Sensor):
         super().__init__(device, name, topic)
         if device_class:
             self.MQTT_VALUES['device_class'] = device_class
-        try:
-            run(
-                ['tee', '/sys/class/gpio/export'],
-                stdout=DEVNULL,
-                input=str(gpio).encode(),
-                check=True,
-            )
-            run(
-                ['tee', f'/sys/class/gpio/gpio{gpio}/direction'],
-                stdout=DEVNULL,
-                input='in'.encode(),
-                check=True,
-            )
-        except CalledProcessError as err:
-            logger.error(f"Can not setup {name} sensor: {err.stdout}")
-
+        if not exists(device):
+            try:
+                run(
+                    ['tee', '/sys/class/gpio/export'],
+                    stdout=DEVNULL,
+                    input=str(gpio).encode(),
+                    check=True,
+                )
+                run(
+                    ['tee', f'/sys/class/gpio/gpio{gpio}/direction'],
+                    stdout=DEVNULL,
+                    input='in'.encode(),
+                    check=True,
+                )
+            except CalledProcessError as err:
+                logger.error(f"Can not setup {name} sensor: {err.stdout}")
 
     def get_value(self):
         with open(self.device, 'r') as f:
