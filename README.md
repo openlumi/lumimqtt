@@ -40,6 +40,27 @@ changes
 
 `sensor_debounce_period` value in seconds to send data despite of the threshold
 
+You can also use GPIO(s) as binary sensor(s). Add this to configuration:
+
+```json
+{
+    <your configuration>,
+    "binary_sensors": {
+        "<sensor name>": {
+            "gpio": "<gpio number>",
+            "device_class": "<device class>",
+            "topic": "<sensor name>"
+        }
+    }
+}
+```
+
+Values in `<>` must be replaced.
+
+`gpio` is required, `device_class` and `topic` are optional. By default `topic` is sensor's name.
+
+[List of GPIOs.](https://github.com/openlumi/xiaomi-gateway-openwrt#gpio)
+[List of device classes.](https://www.home-assistant.io/integrations/binary_sensor/#device-class)
 
 ## OpenWrt installation
 
