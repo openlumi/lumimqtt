@@ -55,6 +55,7 @@ def main():
         port=config['mqtt_port'],
         user=config.get('mqtt_user'),
         password=config.get('mqtt_password'),
+        sensor_retain=config.get('sensor_retain', False),
         sensor_threshold=int(config['sensor_threshold']),
         sensor_debounce_period=int(config['sensor_debounce_period']),
     )

@@ -129,6 +129,7 @@ class LumiMqtt:
             password: ty.Optional[str] = None,
             reconnection_interval: int = 10,
             *,
+            sensor_retain: bool,
             sensor_threshold: int,
             sensor_debounce_period: int,
             loop: ty.Optional[aio.AbstractEventLoop] = None,
@@ -148,6 +149,7 @@ class LumiMqtt:
             retain=True,
         )
 
+        self._sensor_retain = sensor_retain
         self._sensor_threshold = sensor_threshold
         self._sensor_debounce_period = sensor_debounce_period
 
@@ -385,6 +387,7 @@ class LumiMqtt:
                                 topic_name=self._get_topic(sensor.topic),
                                 payload=value,
                                 qos=aio_mqtt.QOSLevel.QOS_1,
+                                retain=self._sensor_retain,
                             ),
                         )
                 except aio_mqtt.ConnectionClosedError as e:
@@ -495,4 +498,3 @@ class LumiMqtt:
             else:
                 logger.info("Disconnected")
                 return
-
