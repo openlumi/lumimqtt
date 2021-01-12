@@ -428,7 +428,10 @@ class LumiMqtt:
                                 retain=self._sensor_retain,
                             ),
                         )
-                except aio_mqtt.ConnectionClosedError as e:
+                except (
+                    aio_mqtt.ConnectionClosedError,
+                    aio_mqtt.ServerDiedError,
+                ) as e:
                     logger.error("Connection closed", exc_info=e)
                     await self._client.wait_for_connect()
                     continue
