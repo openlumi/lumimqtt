@@ -11,7 +11,7 @@ can be overridden with `LUMIMQTT_CONFIG` environment variable.
 Example run command:
 
 ```sh 
-LUMIMQTT_CONFIG=./lumimqtt.json python3 lumimqtt.py
+LUMIMQTT_CONFIG=./lumimqtt.json python3 -m lumimqtt
 ```
 
 The configuration file is a JSON with the following content:
@@ -28,7 +28,7 @@ The configuration file is a JSON with the following content:
     "sensor_debounce_period": 60
 }
 ```
-Every line is optional. By default LumiMQTT will use the connection
+Every line is optional. By default, LumiMQTT will use the connection
 to localhost with the anonymous login.
 
 `{MAC}` will be automatically replaced by a hex number representing a MAC address.
@@ -38,7 +38,7 @@ to localhost with the anonymous login.
 `sensor_threshold` is a threshold to avoid sending data to MQTT on small 
 changes
 
-`sensor_debounce_period` value in seconds to send data despite of the threshold
+`sensor_debounce_period` value in seconds to send data despite the threshold
 
 You can also use GPIO(s) as binary sensor(s). Add this to configuration:
 
@@ -101,7 +101,7 @@ start_service()
     procd_open_instance
 
     procd_set_param env LUMIMQTT_CONFIG=/etc/lumimqtt.json
-    procd_set_param command python3 -m lumimqtt
+    procd_set_param command lumimqtt
     procd_set_param stdout 1
     procd_set_param stderr 1
     procd_close_instance
