@@ -487,6 +487,7 @@ class LumiMqtt:
                     port=self._mqtt_port,
                     username=self._mqtt_user,
                     password=self._mqtt_password,
+                    client_id=self.dev_id,
                     will_message=self._will_message,
                 )
                 logger.info("Connected")
