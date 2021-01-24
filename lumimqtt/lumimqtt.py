@@ -490,7 +490,7 @@ class LumiMqtt:
                     client_id=self.dev_id,
                     will_message=self._will_message,
                 )
-                logger.info("Connected")
+                logger.info(f"Connected to {self._mqtt_host}")
 
                 await self._client.publish(
                     aio_mqtt.PublishableMessage(
