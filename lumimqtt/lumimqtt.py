@@ -187,7 +187,10 @@ class LumiMqtt:
 
         self._reconnection_interval = reconnection_interval
         self._loop = loop or aio.get_event_loop()
-        self._client = aio_mqtt.Client(loop=self._loop)
+        self._client = aio_mqtt.Client(
+            loop=self._loop,
+            client_id_prefix='lumimqtt_',
+        )
         self._tasks = []
 
         self.sensors: ty.List[Sensor] = []
@@ -487,7 +490,7 @@ class LumiMqtt:
                     port=self._mqtt_port,
                     username=self._mqtt_user,
                     password=self._mqtt_password,
-                    client_id=self.dev_id,
+                    client_id=f'lumimqtt_{self.dev_id}',
                     will_message=self._will_message,
                 )
                 logger.info(f"Connected to {self._mqtt_host}")
