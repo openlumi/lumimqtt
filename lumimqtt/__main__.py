@@ -14,9 +14,13 @@ logger = logging.getLogger(__name__)
 
 illuminance_dev = '/sys/bus/iio/devices/iio:device0/in_voltage5_raw'
 button_dev = '/dev/input/event0'
-led_r = '/sys/class/backlight/lumi_r/brightness'
-led_g = '/sys/class/backlight/lumi_g/brightness'
-led_b = '/sys/class/backlight/lumi_b/brightness'
+led_r = '/sys/class/leds/red/brightness'
+led_g = '/sys/class/leds/green/brightness'
+led_b = '/sys/class/leds/blue/brightness'
+
+led_r_legacy = '/sys/class/backlight/lumi_r/brightness'
+led_g_legacy = '/sys/class/backlight/lumi_g/brightness'
+led_b_legacy = '/sys/class/backlight/lumi_b/brightness'
 
 SUBTOPIC_BTN = 'btn0'
 SUBTOPIC_ILLUMINANCE = 'illuminance'
@@ -46,6 +50,16 @@ def main():
         **config,
     }
 
+    if os.path.exists(led_r_legacy):
+        light = {
+            'r': led_r_legacy,
+            'g': led_g_legacy,
+            'b': led_b_legacy,
+            'pwm_max': 100,
+        }
+    else:
+        light = {'r': led_r, 'g': led_g, 'b': led_b, 'pwm_max': 255}
+
     server = LumiMqtt(
         reconnection_interval=10,
         loop=loop,
@@ -71,7 +85,7 @@ def main():
         scancodes=[ecodes.BTN_0],
     ))
     server.register(Light(
-        device={'r': led_r, 'g': led_g, 'b': led_b},
+        device=light,
         name='light',
         topic=SUBTOPIC_LIGHT,
     ))

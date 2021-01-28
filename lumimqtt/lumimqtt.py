@@ -64,6 +64,7 @@ class Light(Device):
         self.led_r = self.device['r']
         self.led_g = self.device['g']
         self.led_b = self.device['b']
+        self.pwm_max = int(self.device['pwm_max'])
         self.state = {
             'state': 'OFF',
             'brightness': 255,
@@ -88,10 +89,11 @@ class Light(Device):
             ('g', self.led_g),
             ('b', self.led_b),
         ]:
-            pwm_value = int((color[c] * 100 / 255) * brightness / 255)
+            pwm_value = \
+                int((color[c] * self.pwm_max / 255) * brightness / 255)
             if state.lower() == 'off':
                 pwm_value = 0
-            if not (0 <= pwm_value <= 100):
+            if not (0 <= pwm_value <= self.pwm_max):
                 pwm_value = 0
             with open(file, 'w+') as f:
                 f.write(str(pwm_value))
