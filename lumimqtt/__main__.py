@@ -6,8 +6,8 @@ from uuid import getnode as get_mac
 
 from evdev import ecodes  # noqa
 
-from .lumimqtt import LumiMqtt, BinarySensor, IlluminanceSensor, Button, Light
 from .__version__ import VERSION
+from .lumimqtt import BinarySensor, Button, IlluminanceSensor, Light, LumiMqtt
 
 logger = logging.getLogger(__name__)
 
@@ -94,7 +94,7 @@ def main():
             sensor_config = {
                 'name': sensor,
                 'topic': sensor,
-                **sensor_options
+                **sensor_options,
             }
             if 'gpio' in sensor_config:
                 server.register(BinarySensor(**sensor_config))
