@@ -26,7 +26,7 @@ def main():
 
     dev_id = hex(get_mac())
     config = {
-        'client_id': dev_id,
+        'dev_id': dev_id,
         'topic_root': 'lumi/{MAC}',
         'mqtt_host': 'localhost',
         'mqtt_port': 1883,
@@ -38,7 +38,7 @@ def main():
     server = LumiMqtt(
         reconnection_interval=10,
         loop=loop,
-        dev_id=config['client_id'],
+        dev_id=config['dev_id'],
         topic_root=config['topic_root'].replace('{MAC}', dev_id),
         host=config['mqtt_host'],
         port=config['mqtt_port'],

@@ -1,6 +1,6 @@
 {
     "mqtt_host": "localhost",
-    "client_id": "",
+    "dev_id": "",
     "mqtt_user": "",
     "mqtt_password": ""
 }
