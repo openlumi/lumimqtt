@@ -1,6 +1,6 @@
 {
     "mqtt_host": "localhost",
-    "dev_id": "",
+    "dev_id": "my-lumi-router",
     "mqtt_user": "",
     "mqtt_password": ""
 }
