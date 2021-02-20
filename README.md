@@ -20,7 +20,7 @@ The configuration file is a JSON with the following content:
 {
     "mqtt_host": "localhost",
     "mqtt_port": 1883,
-    "client_id": "my-lumi-router",
+    "dev_id": "my-lumi-router",
     "mqtt_user": "",
     "mqtt_password": "",
     "topic_root": "lumi/{MAC}",
