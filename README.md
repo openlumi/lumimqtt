@@ -23,7 +23,7 @@ The configuration file is a JSON with the following content:
     "dev_id": "my-lumi-router",
     "mqtt_user": "",
     "mqtt_password": "",
-    "topic_root": "lumi/{MAC}",
+    "topic_root": "lumi/{dev-id}",
     "sensor_retain": false,
     "sensor_threshold": 50,
     "sensor_debounce_period": 60
@@ -32,7 +32,7 @@ The configuration file is a JSON with the following content:
 Every line is optional. By default, LumiMQTT will use the connection
 to localhost with the anonymous login.
 
-`{MAC}` will be automatically replaced by a hex number representing a MAC address.
+`{dev-id}` **if not provided** will be automatically replaced by a hex number representing a MAC address.
 
 `sensor_retain` is option to enable storing last sensor value on the broker
 
