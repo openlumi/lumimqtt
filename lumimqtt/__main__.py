@@ -43,7 +43,7 @@ def main():
     dev_id = hex(get_mac())
     config = {
         'dev_id': dev_id,
-        'topic_root': 'lumi/{MAC}',
+        'topic_root': 'lumi/{dev_id}',
         'mqtt_host': 'localhost',
         'mqtt_port': 1883,
         'sensor_threshold': 50,  # 5% of illuminance sensor
@@ -65,7 +65,7 @@ def main():
         reconnection_interval=10,
         loop=loop,
         dev_id=config['dev_id'],
-        topic_root=config['topic_root'].replace('{MAC}', dev_id),
+        topic_root=config['topic_root'].replace('{dev_id}', dev_id),
         host=config['mqtt_host'],
         port=config['mqtt_port'],
         user=config.get('mqtt_user'),
