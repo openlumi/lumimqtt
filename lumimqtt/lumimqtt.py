@@ -194,7 +194,8 @@ class Light(Device):
                 color['b'] = 255
         if state.lower() == 'off':
             target_brightness = 0
-        transition = value.get('transition', 1)
+        transition = value.get('transition', 1)  # seconds
+        steps = 12 * round(transition + 0.49)
 
         if transition:
             start_level = current_brightness
@@ -212,12 +213,12 @@ class Light(Device):
                 return
 
             """ Calculate number of steps """
-            steps = abs(start_level - end_level)
+            total_range = abs(start_level - end_level)
             fadeout = start_level > end_level
 
             """ Calculate the delay time """
+            step_by = total_range / steps
             delay = transition / steps / 3
-            step_by = 1
 
             new_level = start_level
             for x in range(steps):
