@@ -15,6 +15,20 @@ from .__version__ import VERSION
 logger = logging.getLogger(__name__)
 
 
+class ButtonAction:
+    SINGLE = 'single'
+    DOUBLE = 'double'
+    TRIPLE = 'triple'
+    QUADRUPLE = 'quadruple'
+    MANY = 'many'
+    HOLD = 'hold'
+    DOUBLE_HOLD = 'double_hold'
+    TRIPLE_HOLD = 'triple_hold'
+    QUADRUPLE_HOLD = 'quadruple_hold'
+    MANY_HOLD = 'many_hold'
+    RELEASE = 'release'
+
+
 @dataclass
 class DebounceSensor:
     value: ty.Any
@@ -39,20 +53,82 @@ class Button(Device):
     MQTT_VALUES = {
         'icon': 'mdi:gesture-double-tap',
     }
+    THRESHOLD = 0.3
+    PROVIDE_EVENTS = [
+        getattr(ButtonAction, x)
+        for x in dir(ButtonAction) if not x.startswith('__')
+    ]
 
     def __init__(self, device, name, topic, scancodes=None):
         super().__init__(device, name, topic)
         self.ev_device = InputDevice(self.device)
         self.scancodes = scancodes
 
-    async def handle(self, on_click):
+        self.event_queue = None
+        self.is_pressed = False
+        self.is_sent = False
+        self.clicks_done = 0
+
+    async def handle_events(self):
         async for event in self.ev_device.async_read_loop():
             event = categorize(event)
             if isinstance(event, KeyEvent) and (
                 not self.scancodes or event.scancode in self.scancodes
             ):
-                if event.keystate == KeyEvent.key_up:
-                    await on_click(self)
+                if event.keystate in [KeyEvent.key_up, KeyEvent.key_down]:
+                    await self.event_queue.put(event.keystate)
+
+    async def handle_queue(self, on_click):
+        while True:
+            if self.is_pressed and not self.is_sent or self.clicks_done:
+                try:
+                    event = await aio.wait_for(
+                        self.event_queue.get(),
+                        timeout=self.THRESHOLD,
+                    )
+                except aio.TimeoutError:
+                    action = {
+                        (False, 1): ButtonAction.SINGLE,
+                        (False, 2): ButtonAction.DOUBLE,
+                        (False, 3): ButtonAction.TRIPLE,
+                        (False, 4): ButtonAction.QUADRUPLE,
+                        (True, 0): ButtonAction.HOLD,
+                        (True, 1): ButtonAction.DOUBLE_HOLD,
+                        (True, 2): ButtonAction.TRIPLE_HOLD,
+                        (True, 3): ButtonAction.QUADRUPLE_HOLD,
+                    }.get((self.is_pressed, self.clicks_done))
+                    if action is None:
+                        if self.clicks_done > 3 and self.is_pressed:
+                            action = ButtonAction.MANY_HOLD
+                        elif self.clicks_done > 4 and not self.is_pressed:
+                            action = ButtonAction.MANY
+                        else:
+                            raise NotImplementedError('Unknown button state')
+
+                    await on_click(self, action)
+                    self.is_sent = self.is_pressed
+                    self.clicks_done = 0
+                else:
+                    if event == KeyEvent.key_up:
+                        self.clicks_done += 1
+                        self.is_pressed = False
+                    elif event == KeyEvent.key_down:
+                        self.is_pressed = True
+            else:
+                event = await self.event_queue.get()
+                if event == KeyEvent.key_up:
+                    self.is_pressed = False
+                    await on_click(self, ButtonAction.RELEASE)
+                elif event == KeyEvent.key_down:
+                    self.is_pressed = True
+                self.is_sent = False
+
+    async def handle(self, on_click):
+        self.event_queue = aio.Queue()
+        await aio.gather(
+            self.handle_events(),
+            self.handle_queue(on_click),
+        )
 
 
 class Light(Device):
@@ -125,7 +201,7 @@ class Light(Device):
 
             """ Use brightness or convert brightness_pct """
             end_level = int(target_brightness)
-            
+
             if start_level == end_level:
                 await self.write(value)
                 self.state = {
@@ -133,7 +209,7 @@ class Light(Device):
                     'brightness': brightness,
                     'color': color,
                 }
-                return;
+                return
 
             """ Calculate number of steps """
             steps = abs(start_level - end_level)
@@ -404,29 +480,29 @@ class LumiMqtt:
         # set buttons config
         for button in self.buttons:
             base_topic = self._get_topic(button.topic)
-            await aio.gather(
-                self._client.publish(
-                    aio_mqtt.PublishableMessage(
-                        topic_name=(
-                            f'homeassistant/sensor/{self.dev_id}/'
-                            f'{button.topic}/config'
-                        ),
-                        payload=json.dumps({
-                            **get_generic_vals(button.name),
-                            **(button.MQTT_VALUES or {}),
-                            'json_attributes_topic': base_topic,
-                            'state_topic': base_topic,
-                            'value_template': '{{ value_json.action }}',
-                        }),
-                        qos=aio_mqtt.QOSLevel.QOS_1,
-                        retain=True,
+            messages = [
+                aio_mqtt.PublishableMessage(
+                    topic_name=(
+                        f'homeassistant/sensor/{self.dev_id}/'
+                        f'{button.topic}/config'
                     ),
+                    payload=json.dumps({
+                        **get_generic_vals(button.name),
+                        **(button.MQTT_VALUES or {}),
+                        'json_attributes_topic': base_topic,
+                        'state_topic': base_topic,
+                        'value_template': '{{ value_json.action }}',
+                    }),
+                    qos=aio_mqtt.QOSLevel.QOS_1,
+                    retain=True,
                 ),
-                self._client.publish(
+            ]
+            for event in button.PROVIDE_EVENTS:
+                messages.append(
                     aio_mqtt.PublishableMessage(
                         topic_name=(
                             f'homeassistant/device_automation/'
-                            f'{button.name}_{self.dev_id}/action_single/config'
+                            f'{button.name}_{self.dev_id}/action_{event}/config'
                         ),
                         payload=json.dumps({
                             # device_automation should not have
@@ -434,15 +510,15 @@ class LumiMqtt:
                             'device': device,
                             'automation_type': 'trigger',
                             'topic': f'{base_topic}/action',
-                            'subtype': 'single',
-                            'payload': 'single',
+                            'subtype': event,
+                            'payload': event,
                             'type': 'action',
                         }),
                         qos=aio_mqtt.QOSLevel.QOS_1,
                         retain=True,
                     ),
-                ),
-            )
+                )
+            await aio.gather(*[self._client.publish(m) for m in messages])
 
         # set LED lights config
         for light in self.lights:
@@ -509,13 +585,24 @@ class LumiMqtt:
             await aio.sleep(period)
 
     async def _handle_buttons(self):
-        finished, unfinished = await aio.wait(
-            [
-                aio.create_task(button.handle(self._handle_click))
-                for button in self.buttons
-            ],
-            return_when=aio.FIRST_COMPLETED,
-        )
+        tasks = [
+            aio.create_task(button.handle(self._handle_click))
+            for button in self.buttons
+        ]
+        try:
+            finished, unfinished = await aio.wait(
+                tasks,
+                return_when=aio.FIRST_COMPLETED,
+            )
+        except aio.CancelledError:
+            for t in tasks:
+                t.cancel()
+                try:
+                    await t
+                except aio.CancelledError:
+                    pass
+            raise
+
         for t in unfinished:
             t.cancel()
             try:
@@ -525,19 +612,20 @@ class LumiMqtt:
         for t in finished:
             t.result()
 
-    async def _handle_click(self, button: Button):
+    async def _handle_click(self, button: Button, action: str):
+        logger.debug(f'{button} sent "{action}" event')
         await aio.gather(
             self._client.publish(
                 aio_mqtt.PublishableMessage(
                     topic_name=self._get_topic(button.topic),
-                    payload=json.dumps({'action': 'single'}),
+                    payload=json.dumps({'action': action}),
                     qos=aio_mqtt.QOSLevel.QOS_1,
                 ),
             ),
             self._client.publish(
                 aio_mqtt.PublishableMessage(
                     topic_name=self._get_topic(f'{button.topic}/action'),
-                    payload='single',
+                    payload=action,
                     qos=aio_mqtt.QOSLevel.QOS_1,
                 ),
             ),
