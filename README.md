@@ -2,7 +2,7 @@
 
 ## Description
 
-The service allow controlling gateway LEDs. sound and illuminance 
+The service allow controlling gateway LEDs, button, and illuminance 
 sensor over MQTT
 
 Default config should be located in `/etc/lumimqtt.json` or 
