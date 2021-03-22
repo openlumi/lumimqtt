@@ -37,7 +37,7 @@ def main():
         try:
             with open(os.environ['LUMIMQTT_CONFIG'], 'r') as f:
                 config = json.load(f)
-        except Exception:
+        except FileNotFoundError:
             pass
 
     dev_id = hex(get_mac())
