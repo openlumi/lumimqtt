@@ -4,7 +4,7 @@ LUMI button input
 
 import asyncio as aio
 
-from evdev import InputDevice, KeyEvent, categorize
+from evdev import InputDevice, KeyEvent, categorize, ecodes
 
 from .device import Device
 
@@ -36,10 +36,10 @@ class Button(Device):
         for x in dir(ButtonAction) if not x.startswith('__')
     ]
 
-    def __init__(self, device, name, topic, scancodes=None):
-        super().__init__(device, name, topic)
-        self.ev_device = InputDevice(self.device)
-        self.scancodes = scancodes
+    def __init__(self, name, device_file, topic, scancodes):
+        super().__init__(name, device_file, topic)
+        self.ev_device = InputDevice(self.device_file)
+        self.scancodes = [ecodes.ecodes[scancode] for scancode in scancodes]
 
         self.event_queue = None
         self.is_pressed = False
