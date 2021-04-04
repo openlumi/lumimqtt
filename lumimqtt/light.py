@@ -21,9 +21,9 @@ class Light(Device):
         self.led_b = self.device_file['b']
         self.pwm_max = int(self.device_file['pwm_max'])
 
-        state_r = int(open(self.led_r, 'r').read())
-        state_g = int(open(self.led_g, 'r').read())
-        state_b = int(open(self.led_b, 'r').read())
+        state_r = int(self.read_raw(self.led_r))
+        state_g = int(self.read_raw(self.led_g))
+        state_b = int(self.read_raw(self.led_b))
 
         self.state = {
             'state': 'ON' if state_r or state_g or state_b else 'OFF',
