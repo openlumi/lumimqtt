@@ -2,9 +2,8 @@
 LUMI sensor devices (GPIO, illuminance)
 """
 
-from os.path import exists
-from subprocess import CalledProcessError, DEVNULL, run
 import logging
+import os
 
 from .device import Device
 
@@ -30,22 +29,14 @@ class BinarySensor(Sensor):
         super().__init__(name, device_file, topic)
         if device_class:
             self.MQTT_VALUES['device_class'] = device_class
-        if not exists(device_file):
+        if not os.path.exists(device_file):
             try:
-                run(
-                    ['tee', '/sys/class/gpio/export'],
-                    stdout=DEVNULL,
-                    input=str(gpio).encode(),
-                    check=True,
-                )
-                run(
-                    ['tee', f'/sys/class/gpio/gpio{gpio}/direction'],
-                    stdout=DEVNULL,
-                    input='in'.encode(),
-                    check=True,
-                )
-            except CalledProcessError as err:
-                logger.error(f"Can not setup {name} sensor: {err.stdout}")
+                with open('/sys/class/gpio/export', 'w') as f:
+                    f.write(str(gpio))
+                with open(f'/sys/class/gpio/gpio{gpio}/direction', 'w') as f:
+                    f.write('in')
+            except OSError as err:
+                logger.error(f"Can not setup {name} sensor: {err}")
 
     def get_value(self):
         return 'OFF' if self.read_raw() == '0' else 'ON'
