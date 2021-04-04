@@ -2,14 +2,15 @@
 
 from setuptools import setup
 
-from lumimqtt.__version__ import VERSION
-
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setup(
     name='lumimqtt',
-    version=VERSION,
+    use_scm_version={
+        'write_to': 'lumimqtt/__version__.py',
+    },
+    setup_requires=['setuptools_scm'],
     description='Xiaomi Lumi Gateway MQTT integration',
     long_description=long_description,
     long_description_content_type="text/markdown",

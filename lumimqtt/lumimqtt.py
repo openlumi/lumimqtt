@@ -11,7 +11,7 @@ from datetime import datetime
 
 import aio_mqtt
 
-from .__version__ import VERSION
+from .__version__ import version
 from .button import Button
 from .device import Device
 from .light import Light
@@ -177,7 +177,7 @@ class LumiMqtt:
                 f'xiaomi_gateway_{self.dev_id}',
             ],
             'name': f'xiaomi_gateway_{self.dev_id}',
-            'sw_version': VERSION,
+            'sw_version': version,
             'model': 'Xiaomi Gateway',
             'manufacturer': 'Xiaomi',
         }

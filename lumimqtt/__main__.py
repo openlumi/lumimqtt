@@ -4,7 +4,7 @@ import logging
 import os
 from uuid import getnode as get_mac
 
-from .__version__ import VERSION
+from .__version__ import version
 from .lumimqtt import LumiMqtt
 from .platform import devices
 
@@ -52,7 +52,7 @@ def main():
         server.register(device)
 
     try:
-        logger.info(f'Start lumimqtt {VERSION}')
+        logger.info(f'Start lumimqtt {version}')
         loop.run_until_complete(server.start())
     except KeyboardInterrupt:
         pass
