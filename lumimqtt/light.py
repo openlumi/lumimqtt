@@ -14,12 +14,12 @@ class Light(Device):
     RGB = True
     BRIGHTNESS = True
 
-    def __init__(self, device: dict, name, topic):
-        super().__init__(device, name, topic)
-        self.led_r = self.device['r']
-        self.led_g = self.device['g']
-        self.led_b = self.device['b']
-        self.pwm_max = int(self.device['pwm_max'])
+    def __init__(self, name, devices: dict, topic):
+        super().__init__(name, devices, topic)
+        self.led_r = self.device_file['r']
+        self.led_g = self.device_file['g']
+        self.led_b = self.device_file['b']
+        self.pwm_max = int(self.device_file['pwm_max'])
 
         state_r = int(open(self.led_r, 'r').read())
         state_g = int(open(self.led_g, 'r').read())

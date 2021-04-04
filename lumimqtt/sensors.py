@@ -25,12 +25,12 @@ class BinarySensor(Sensor):
     """
     MQTT_VALUES = {}
 
-    def __init__(self, gpio, name, topic, device_class=None):
-        device = f"/sys/class/gpio/gpio{gpio}/value"
-        super().__init__(device, name, topic)
+    def __init__(self, name, gpio, topic, device_class=None):
+        device_file = f"/sys/class/gpio/gpio{gpio}/value"
+        super().__init__(name, device_file, topic)
         if device_class:
             self.MQTT_VALUES['device_class'] = device_class
-        if not exists(device):
+        if not exists(device_file):
             try:
                 run(
                     ['tee', '/sys/class/gpio/export'],
@@ -48,7 +48,7 @@ class BinarySensor(Sensor):
                 logger.error(f"Can not setup {name} sensor: {err.stdout}")
 
     def get_value(self):
-        with open(self.device, 'r') as f:
+        with open(self.device_file, 'r') as f:
             return 'OFF' if f.read()[:-1] == '0' else 'ON'
 
 
@@ -63,7 +63,7 @@ class IlluminanceSensor(Sensor):
     }
 
     def get_value(self):
-        with open(self.device, 'r') as f:
+        with open(self.device_file, 'r') as f:
             data = f.read()[:-1]
             try:
                 return int(int(data) * self.COEFFICIENT)
