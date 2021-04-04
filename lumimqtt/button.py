@@ -1,3 +1,7 @@
+"""
+LUMI button input
+"""
+
 import asyncio as aio
 
 from evdev import InputDevice, KeyEvent, categorize
@@ -20,6 +24,9 @@ class ButtonAction:
 
 
 class Button(Device):
+    """
+    Button
+    """
     MQTT_VALUES = {
         'icon': 'mdi:gesture-double-tap',
     }

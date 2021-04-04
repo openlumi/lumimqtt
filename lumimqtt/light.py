@@ -1,9 +1,16 @@
+"""
+LUMI light control
+"""
+
 import asyncio as aio
 
 from .device import Device
 
 
 class Light(Device):
+    """
+    Light control
+    """
     RGB = True
     BRIGHTNESS = True
 
@@ -93,7 +100,7 @@ class Light(Device):
             delay = transition / steps / 3
 
             new_level = start_level
-            for x in range(steps):
+            for _ in range(steps):
                 if fadeout:
                     new_level = new_level - step_by
                     if new_level < end_level:

@@ -1,3 +1,7 @@
+"""
+LUMI sensor devices (GPIO, illuminance)
+"""
+
 from os.path import exists
 from subprocess import CalledProcessError, DEVNULL, run
 import logging
@@ -8,11 +12,17 @@ logger = logging.getLogger(__name__)
 
 
 class Sensor(Device):
+    """
+    Base sensor class
+    """
     def get_value(self):
         raise NotImplementedError()
 
 
 class BinarySensor(Sensor):
+    """
+    Binary sensor (GPIO)
+    """
     MQTT_VALUES = {}
 
     def __init__(self, gpio, name, topic, device_class=None):
@@ -43,6 +53,9 @@ class BinarySensor(Sensor):
 
 
 class IlluminanceSensor(Sensor):
+    """
+    Illuminance sensor
+    """
     COEFFICIENT = 0.25
     MQTT_VALUES = {
         'device_class': 'illuminance',
