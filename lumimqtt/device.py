@@ -1,3 +1,8 @@
+"""
+Basic Device class
+"""
+
+
 class Device:
     MQTT_VALUES = None
 
