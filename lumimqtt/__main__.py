@@ -4,10 +4,13 @@ import logging
 import os
 from uuid import getnode as get_mac
 
-from evdev import ecodes  # noqa
+from evdev import ecodes
 
 from .__version__ import VERSION
-from .lumimqtt import BinarySensor, Button, IlluminanceSensor, Light, LumiMqtt
+from .button import Button
+from .light import Light
+from .lumimqtt import LumiMqtt
+from .sensors import BinarySensor, IlluminanceSensor
 
 logger = logging.getLogger(__name__)
 
@@ -25,6 +28,7 @@ led_b_legacy = '/sys/class/backlight/lumi_b/brightness'
 SUBTOPIC_BTN = 'btn0'
 SUBTOPIC_ILLUMINANCE = 'illuminance'
 SUBTOPIC_LIGHT = 'light'
+SUBTOPIC_SOUND = 'sound'
 
 
 def main():
