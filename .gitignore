@@ -4,3 +4,5 @@ lumimqtt.json
 build
 dist
 *.egg-info
+#auto-generated version file
+lumimqtt/__version__.py
