@@ -48,8 +48,7 @@ class BinarySensor(Sensor):
                 logger.error(f"Can not setup {name} sensor: {err.stdout}")
 
     def get_value(self):
-        with open(self.device_file, 'r') as f:
-            return 'OFF' if f.read()[:-1] == '0' else 'ON'
+        return 'OFF' if self.read_raw() == '0' else 'ON'
 
 
 class IlluminanceSensor(Sensor):
@@ -63,9 +62,5 @@ class IlluminanceSensor(Sensor):
     }
 
     def get_value(self):
-        with open(self.device_file, 'r') as f:
-            data = f.read()[:-1]
-            try:
-                return int(int(data) * self.COEFFICIENT)
-            except ValueError:
-                return data
+        raw_value = self.read_raw()
+        return int(int(raw_value) * self.COEFFICIENT)
