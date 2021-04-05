@@ -7,7 +7,7 @@ import os
 class Device:
     MQTT_VALUES = None
 
-    def __init__(self, name, device_file, topic):
+    def __init__(self, name, device_file, topic=None):
         self.name = name
         self.device_file = device_file
         self.topic = topic

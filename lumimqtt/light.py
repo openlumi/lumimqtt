@@ -1,10 +1,29 @@
 """
 LUMI light control
 """
-
 import asyncio as aio
+import logging
+import os
 
 from .device import Device
+
+logger = logging.getLogger(__name__)
+
+
+class LED(Device):
+    """
+    LED control
+    """
+    def __init__(self, name, device_dir):
+        brightness_dev = os.path.join(device_dir, 'brightness')
+        super().__init__(name, brightness_dev)
+        self.brightness = int(self.read_raw(self.device_file))
+        max_brightness_dev = os.path.join(device_dir, 'max_brightness')
+        self.max_brightness = int(self.read_raw(max_brightness_dev))
+
+    async def write(self, value: int):
+        with open(self.device_file, 'w') as f:
+            f.write(f'{value}\n')
 
 
 class Light(Device):
@@ -15,114 +34,78 @@ class Light(Device):
     BRIGHTNESS = True
 
     def __init__(self, name, devices: dict, topic):
-        super().__init__(name, devices, topic)
-        self.led_r = self.device_file['r']
-        self.led_g = self.device_file['g']
-        self.led_b = self.device_file['b']
-        self.pwm_max = int(self.device_file['pwm_max'])
+        super().__init__(name, None, topic)
+        self.red = LED(f'{name}_red', devices['red'])
+        self.green = LED(f'{name}_green', devices['green'])
+        self.blue = LED(f'{name}_blue', devices['blue'])
 
-        state_r = int(self.read_raw(self.led_r))
-        state_g = int(self.read_raw(self.led_g))
-        state_b = int(self.read_raw(self.led_b))
+        self.leds = {
+            'r': self.red,
+            'g': self.green,
+            'b': self.blue
+        }
 
         self.state = {
-            'state': 'ON' if state_r or state_g or state_b else 'OFF',
+            'state': 'ON' if any((self.red.brightness,
+                                 self.green.brightness,
+                                 self.blue.brightness)) else 'OFF',
             'brightness': 255,
-            'color': {
-                'r': int(state_r / self.pwm_max * 255),
-                'g': int(state_g / self.pwm_max * 255),
-                'b': int(state_b / self.pwm_max * 255),
-            },
+            'color': {},
         }
+        for c, led in self.leds.items():
+            self.state['color'][c] = int(
+                led.brightness / led.max_brightness * 255)
 
     @property
     def topic_set(self):
         return f'{self.topic}/set'
 
-    async def write(self, value: dict):
-        state = value.get('state', self.state['state'])
-        color = value.get('color', self.state['color'])
-        brightness = value.get('brightness', self.state['brightness'])
-
-        for c, file in [
-            ('r', self.led_r),
-            ('g', self.led_g),
-            ('b', self.led_b),
-        ]:
-            pwm_value = \
-                int((color[c] * self.pwm_max / 255) * brightness / 255)
-            if state.lower() == 'off':
-                pwm_value = 0
-            if not (0 <= pwm_value <= self.pwm_max):
-                pwm_value = 0
-            with open(file, 'w+') as f:
-                f.write(str(pwm_value))
-                f.write('\n')
-
     async def set(self, value: dict):
         state = value.get('state', self.state['state'])
         color = value.get('color', self.state['color'])
-        brightness = value.get('brightness', self.state['brightness'])
-        current_brightness = self.state['brightness']
-        target_brightness = brightness
-        if self.state['state'].lower() == 'off':
-            current_brightness = 0
-            if color['r'] == 0 and color['g'] == 0 and color['b'] == 0:
-                color['r'] = 255
-                color['g'] = 255
-                color['b'] = 255
-        if state.lower() == 'off':
-            target_brightness = 0
+        # have to save to separate variable, to keep it after off
+        target_brightness = \
+            brightness = value.get('brightness', self.state['brightness'])
         transition = value.get('transition', 1)  # seconds
-        steps = 12 * round(transition + 0.49)
+        start_brightness = self.state['brightness']
+        start_color = self.state['color']
+
+        if self.state['state'].lower() == 'off':
+            start_brightness = 0
+            if color['r'] == 0 and color['g'] == 0 and color['b'] == 0:
+                color['r'] = color['g'] = color['b'] = 255
+        if state.lower() == 'off':
+            brightness = 0
+
+        def color_repr(color: dict):
+            return f'#{color["r"]:02x}{color["g"]:02x}{color["b"]:02x}'
+
+        logger.info(f'Change light from {self.state["state"]} '
+                    f'{start_brightness} {color_repr(start_color)}'
+                    f'to {state} {brightness} #{color_repr(start_color)}')
 
         if transition:
-            start_level = current_brightness
-
-            """ Use brightness or convert brightness_pct """
-            end_level = int(target_brightness)
-
-            if start_level == end_level:
-                await self.write(value)
-                self.state = {
-                    'state': state,
-                    'brightness': brightness,
-                    'color': color,
-                }
-                return
-
-            """ Calculate number of steps """
-            total_range = abs(start_level - end_level)
-            fadeout = start_level > end_level
-
-            """ Calculate the delay time """
-            step_by = total_range / steps
+            steps = 12 * transition
             delay = transition / steps / 3
-
-            new_level = start_level
-            for _ in range(steps):
-                if fadeout:
-                    new_level = new_level - step_by
-                    if new_level < end_level:
-                        new_level = end_level
-                else:
-                    new_level = new_level + step_by
-                    if new_level > end_level:
-                        new_level = end_level
-                new_value = value.copy()
-                new_value['brightness'] = new_level
-                new_value['state'] = 'ON'
-                await self.write(new_value)
+            for step_num in range(1, steps):
+                for led, c in self.leds.items():
+                    step = (color[c] * brightness / 255 -
+                            start_color[c] * start_brightness / 255) / steps
+                    next_value = (start_color[c] * start_brightness / 255 +
+                                  step * step_num) / 255 * led.max_brightness
+                    next_value = int(min(max(next_value, 0),
+                                         led.max_brightness))  # normalize
+                    await led.write(next_value)
                 await aio.sleep(delay)
-            if new_level != target_brightness:
-                new_value = value.copy()
-                new_value['brightness'] = target_brightness
-                await self.write(new_value)
-        else:
-            await self.write(value)
+
+        for led, c in self.leds.items():
+            next_value = color[c] / 255 * led.max_brightness * brightness / 255
+            next_value = int(min(max(next_value, 0),
+                                 led.max_brightness))  # normalize
+            await led.write(next_value)
 
         self.state = {
             'state': state,
-            'brightness': brightness,
+            'brightness': target_brightness,
             'color': color,
         }
