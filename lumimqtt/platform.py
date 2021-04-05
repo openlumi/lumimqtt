@@ -46,27 +46,30 @@ def buttons():
 
 
 def lights():
-    led_r = '/sys/class/leds/red/brightness'
-    led_g = '/sys/class/leds/green/brightness'
-    led_b = '/sys/class/leds/blue/brightness'
+    led_r = '/sys/class/leds/red'
+    led_g = '/sys/class/leds/green'
+    led_b = '/sys/class/leds/blue'
 
-    led_r_legacy = '/sys/class/backlight/lumi_r/brightness'
-    led_g_legacy = '/sys/class/backlight/lumi_g/brightness'
-    led_b_legacy = '/sys/class/backlight/lumi_b/brightness'
+    led_r_legacy = '/sys/class/backlight/lumi_r'
+    led_g_legacy = '/sys/class/backlight/lumi_g'
+    led_b_legacy = '/sys/class/backlight/lumi_b'
     if os.path.exists(led_r_legacy):
-        light = {
-            'r': led_r_legacy,
-            'g': led_g_legacy,
-            'b': led_b_legacy,
-            'pwm_max': 100,
+        leds = {
+            'red': led_r_legacy,
+            'green': led_g_legacy,
+            'blue': led_b_legacy,
         }
     else:
-        light = {'r': led_r, 'g': led_g, 'b': led_b, 'pwm_max': 255}
+        leds = {
+            'red': led_r,
+            'green': led_g,
+            'blue': led_b
+        }
     lights_ = list()
-    for name, device_file in (
-            ('light', light),
+    for name, device_dirs in (
+            ('light', leds),
     ):
-        lights_.append(Light(name=name, devices=light, topic=name))
+        lights_.append(Light(name=name, devices=device_dirs, topic=name))
     return lights_
 
 
