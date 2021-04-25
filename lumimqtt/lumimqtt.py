@@ -373,15 +373,19 @@ class LumiMqtt:
     async def _connect_forever(self) -> None:
         while True:
             try:
+                client_id = f'lumimqtt_{self.dev_id}'
                 connect_result = await self._client.connect(
                     host=self._mqtt_host,
                     port=self._mqtt_port,
                     username=self._mqtt_user,
                     password=self._mqtt_password,
-                    client_id=f'lumimqtt_{self.dev_id}',
+                    client_id=client_id,
                     will_message=self._will_message,
                 )
-                logger.info(f"Connected to {self._mqtt_host}")
+                logger.info(
+                    f"Connected to {self._mqtt_host} with client id "
+                    f"'{client_id}'",
+                )
 
                 await self._client.publish(
                     aio_mqtt.PublishableMessage(
