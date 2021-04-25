@@ -88,7 +88,7 @@ class Light(Device):
             steps = 12 * transition
             delay = transition / steps / 3
             for step_num in range(1, steps):
-                for led, c in self.leds.items():
+                for c, led in self.leds.items():
                     step = (color[c] * brightness / 255 -
                             start_color[c] * start_brightness / 255) / steps
                     next_value = (start_color[c] * start_brightness / 255 +
@@ -98,7 +98,7 @@ class Light(Device):
                     await led.write(next_value)
                 await aio.sleep(delay)
 
-        for led, c in self.leds.items():
+        for c, led in self.leds.items():
             next_value = color[c] / 255 * led.max_brightness * brightness / 255
             next_value = int(min(max(next_value, 0),
                                  led.max_brightness))  # normalize
