@@ -42,10 +42,10 @@ def main():
         except FileNotFoundError:
             pass
 
-    dev_id = read_mac()
+    device_id = read_mac()
     config = {
-        'dev_id': dev_id,
-        'topic_root': 'lumi/{dev_id}',
+        'device_id': device_id,
+        'topic_root': 'lumi/{device_id}',
         'mqtt_host': 'localhost',
         'mqtt_port': 1883,
         'sensor_threshold': 50,  # 5% of illuminance sensor
@@ -53,11 +53,15 @@ def main():
         **config,
     }
 
+    topic_root = \
+        config['topic_root'].\
+        replace('{device_id}', device_id).\
+        replace('{MAC}', device_id)  # support old configs
     server = LumiMqtt(
         reconnection_interval=10,
         loop=loop,
-        dev_id=config['dev_id'],
-        topic_root=config['topic_root'].replace('{dev_id}', dev_id),
+        device_id=config['device_id'],
+        topic_root=topic_root,
         host=config['mqtt_host'],
         port=config['mqtt_port'],
         user=config.get('mqtt_user'),

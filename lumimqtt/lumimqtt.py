@@ -29,7 +29,7 @@ class DebounceSensor:
 class LumiMqtt:
     def __init__(
             self,
-            dev_id: str,
+            device_id: str,
             topic_root: str,
             host: str,
             port: int = None,
@@ -42,7 +42,7 @@ class LumiMqtt:
             sensor_debounce_period: int,
             loop: ty.Optional[aio.AbstractEventLoop] = None,
     ) -> None:
-        self.dev_id = dev_id
+        self.dev_id = device_id
         self._topic_root = topic_root
         self._topic_lwt = f'{topic_root}/status'
         self._mqtt_host = host
