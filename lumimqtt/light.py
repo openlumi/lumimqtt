@@ -81,8 +81,8 @@ class Light(Device):
             return f'#{color["r"]:02x}{color["g"]:02x}{color["b"]:02x}'
 
         logger.info(f'Change light from {self.state["state"]} '
-                    f'{start_brightness} {color_repr(start_color)}'
-                    f'to {state} {brightness} #{color_repr(start_color)}')
+                    f'{start_brightness} {color_repr(start_color)} '
+                    f'to {state} {brightness} {color_repr(start_color)}')
 
         if transition:
             steps = 12 * transition
