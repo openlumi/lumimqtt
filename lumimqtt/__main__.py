@@ -11,6 +11,24 @@ from .platform import devices
 logger = logging.getLogger(__name__)
 
 
+def read_mac():
+    # We try to read mac address from wlan0 interface at first
+    # if the file is absent or empty, use generic uuid.getnode()
+
+    addr_file = '/sys/class/net/wlan0/address'
+    try:
+        with open(addr_file, 'r') as f:
+            mac = f.readline().strip('\n')
+        mac = f"0x{mac.replace(':', '')}"
+    except FileNotFoundError:
+        mac = get_mac()
+        if (mac >> 40) % 2:
+            logger.error("Can't get a valid mac, use randomly generated one")
+        mac = hex(mac)
+
+    return mac
+
+
 def main():
     logging.basicConfig(level='INFO')
     loop = aio.new_event_loop()
@@ -24,7 +42,7 @@ def main():
         except FileNotFoundError:
             pass
 
-    dev_id = hex(get_mac())
+    dev_id = read_mac()
     config = {
         'dev_id': dev_id,
         'topic_root': 'lumi/{dev_id}',
