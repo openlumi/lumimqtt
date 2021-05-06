@@ -22,7 +22,6 @@ The configuration file is a JSON with the following content:
     "mqtt_port": 1883,
     "mqtt_user": "",
     "mqtt_password": "",
-    "device_id": "my-lumi-router",
     "topic_root": "lumi/{device_id}",
     "sensor_retain": false,
     "sensor_threshold": 50,
