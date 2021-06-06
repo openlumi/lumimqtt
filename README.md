@@ -25,7 +25,8 @@ The configuration file is a JSON with the following content:
     "topic_root": "lumi/{device_id}",
     "sensor_retain": false,
     "sensor_threshold": 50,
-    "sensor_debounce_period": 60
+    "sensor_debounce_period": 60,
+    "light_transition_period": 1.0
 }
 ```
 Every line is optional. By default, LumiMQTT will use the connection
@@ -40,6 +41,9 @@ representing a MAC address of the first network interface.
 changes
 
 `sensor_debounce_period` value in seconds to send data despite the threshold
+
+`light_transition_period` value in seconds to set default transition for light
+switching or light change. Use `0` to remove the transition.
 
 You can also use GPIO(s) as binary sensor(s). Add this to configuration:
 

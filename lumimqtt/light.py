@@ -42,7 +42,7 @@ class Light(Device):
         self.leds = {
             'r': self.red,
             'g': self.green,
-            'b': self.blue
+            'b': self.blue,
         }
 
         self.state = {
@@ -60,13 +60,13 @@ class Light(Device):
     def topic_set(self):
         return f'{self.topic}/set'
 
-    async def set(self, value: dict):
+    async def set(self, value: dict, transition_period: float):
         state = value.get('state', self.state['state'])
         color = value.get('color', self.state['color'])
         # have to save to separate variable, to keep it after off
         target_brightness = \
             brightness = value.get('brightness', self.state['brightness'])
-        transition = value.get('transition', 1)  # seconds
+        transition = value.get('transition', transition_period)  # seconds
         start_brightness = self.state['brightness']
         start_color = self.state['color']
 
@@ -85,7 +85,9 @@ class Light(Device):
                     f'to {state} {brightness} {color_repr(start_color)}')
 
         if transition:
-            steps = 12 * transition
+            steps = int(12 * transition)
+            if steps < 1:
+                steps = 1
             delay = transition / steps / 3
             for step_num in range(1, steps):
                 for c, led in self.leds.items():

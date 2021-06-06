@@ -40,6 +40,7 @@ class LumiMqtt:
             sensor_retain: bool,
             sensor_threshold: int,
             sensor_debounce_period: int,
+            light_transition_period: float,
             loop: ty.Optional[aio.AbstractEventLoop] = None,
     ) -> None:
         self.dev_id = device_id
@@ -60,6 +61,7 @@ class LumiMqtt:
         self._sensor_retain = sensor_retain
         self._sensor_threshold = sensor_threshold
         self._sensor_debounce_period = sensor_debounce_period
+        self._light_transition_period = light_transition_period
 
         self._reconnection_interval = reconnection_interval
         self._loop = loop or aio.get_event_loop()
@@ -152,7 +154,7 @@ class LumiMqtt:
                     break
 
                 try:
-                    await light.set(value)
+                    await light.set(value, self._light_transition_period)
                     await self._client.publish(
                         aio_mqtt.PublishableMessage(
                             topic_name=self._get_topic(light.topic),

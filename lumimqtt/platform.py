@@ -63,7 +63,7 @@ def lights():
         leds = {
             'red': led_r,
             'green': led_g,
-            'blue': led_b
+            'blue': led_b,
         }
     lights_ = list()
     for name, device_dirs in (
@@ -73,5 +73,5 @@ def lights():
     return lights_
 
 
-def devices(config: dict):
-    return sensors(config) + buttons() + lights()
+def devices(binary_sensors: dict):
+    return sensors(binary_sensors) + buttons() + lights()
