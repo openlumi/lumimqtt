@@ -51,6 +51,7 @@ def main():
         'sensor_threshold': 50,  # 5% of illuminance sensor
         'sensor_debounce_period': 60,  # 1 minute
         'light_transition_period': 1.0,  # second
+        'light_tele_period': 60, # 1 minute
         **config,
     }
 
@@ -71,6 +72,7 @@ def main():
         sensor_threshold=int(config['sensor_threshold']),
         sensor_debounce_period=int(config['sensor_debounce_period']),
         light_transition_period=float(config['light_transition_period']),
+        light_tele_period=float(config['light_tele_period']),
     )
 
     for device in devices(config.get('binary_sensors', {})):
