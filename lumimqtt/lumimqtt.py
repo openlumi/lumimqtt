@@ -1,3 +1,4 @@
+
 """
 LUMI MQTT handler
 """
@@ -41,6 +42,7 @@ class LumiMqtt:
             sensor_threshold: int,
             sensor_debounce_period: int,
             light_transition_period: float,
+            light_tele_period: float,
             loop: ty.Optional[aio.AbstractEventLoop] = None,
     ) -> None:
         self.dev_id = device_id
@@ -62,6 +64,8 @@ class LumiMqtt:
         self._sensor_threshold = sensor_threshold
         self._sensor_debounce_period = sensor_debounce_period
         self._light_transition_period = light_transition_period
+        self._light_tele_period = light_tele_period
+        self._light_last_sent = None
 
         self._reconnection_interval = reconnection_interval
         self._loop = loop or aio.get_event_loop()
@@ -155,13 +159,7 @@ class LumiMqtt:
 
                 try:
                     await light.set(value, self._light_transition_period)
-                    await self._client.publish(
-                        aio_mqtt.PublishableMessage(
-                            topic_name=self._get_topic(light.topic),
-                            payload=json.dumps(light.state),
-                            qos=aio_mqtt.QOSLevel.QOS_1,
-                        ),
-                    )
+                    await self._publish_light(light)
                 except aio_mqtt.ConnectionClosedError as e:
                     logger.error("Connection closed", exc_info=e)
                     await self._client.wait_for_connect()
@@ -278,8 +276,8 @@ class LumiMqtt:
             if not self._client.is_connected():
                 await aio.sleep(1)
                 continue
-            for sensor in self.sensors:
-                try:
+            try:
+                for sensor in self.sensors:
                     value = sensor.get_value()
                     debounce_val = self._debounce_sensors.get(sensor)
                     if self._is_binary(sensor):
@@ -301,22 +299,46 @@ class LumiMqtt:
                             value=value,
                             last_sent=datetime.now(),
                         )
-                        await self._client.publish(
-                            aio_mqtt.PublishableMessage(
-                                topic_name=self._get_topic(sensor.topic),
-                                payload=value,
-                                qos=aio_mqtt.QOSLevel.QOS_1,
-                                retain=self._sensor_retain,
-                            ),
-                        )
-                except (
-                    aio_mqtt.ConnectionClosedError,
-                    aio_mqtt.ServerDiedError,
-                ) as e:
-                    logger.error("Connection closed", exc_info=e)
-                    await self._client.wait_for_connect()
-                    continue
+                        await self._publish_sensor(sensor, value)
+
+                for light in self.lights:
+                    now = datetime.now()
+                    should_send = (
+                        self._light_last_sent is None or
+                        (now - self._light_last_sent).seconds >= self._light_tele_period
+                    )
+                    if should_send:
+                        await self._publish_light(light)
+                        self._light_last_sent = datetime.now()
+            except (
+                aio_mqtt.ConnectionClosedError,
+                aio_mqtt.ServerDiedError,
+            ) as e:
+                logger.error("Connection closed", exc_info=e)
+                await self._client.wait_for_connect()
+                continue
+
             await aio.sleep(period)
+
+    async def _publish_sensor(self, sensor: Sensor, value=False):
+        value = value or sensor.get_value()
+        await self._client.publish(
+            aio_mqtt.PublishableMessage(
+                topic_name=self._get_topic(sensor.topic),
+                payload=value,
+                qos=aio_mqtt.QOSLevel.QOS_1,
+                retain=self._sensor_retain,
+            ),
+        )
+
+    async def _publish_light(self, light: Light):
+        await self._client.publish(
+            aio_mqtt.PublishableMessage(
+                topic_name=self._get_topic(light.topic),
+                payload=json.dumps(light.state),
+                qos=aio_mqtt.QOSLevel.QOS_1,
+            ),
+        )
 
     async def _handle_buttons(self):
         tasks = [
@@ -403,6 +425,12 @@ class LumiMqtt:
                     for t in self.subscribed_topics
                 ])
                 await self.send_config()
+
+                for light in self.lights:
+                    await self._publish_light(light)
+
+                for sensor in self.sensors:
+                    await self._publish_sensor(sensor)
 
                 logger.info("Wait for network interruptions...")
                 await connect_result.disconnect_reason
