@@ -42,7 +42,7 @@ class LumiMqtt:
             sensor_threshold: int,
             sensor_debounce_period: int,
             light_transition_period: float,
-            light_tele_period: float,
+            light_notification_period: float,
             loop: ty.Optional[aio.AbstractEventLoop] = None,
     ) -> None:
         self.dev_id = device_id
@@ -64,7 +64,7 @@ class LumiMqtt:
         self._sensor_threshold = sensor_threshold
         self._sensor_debounce_period = sensor_debounce_period
         self._light_transition_period = light_transition_period
-        self._light_tele_period = light_tele_period
+        self._light_notification_period = light_notification_period
         self._light_last_sent = None
 
         self._reconnection_interval = reconnection_interval
@@ -305,7 +305,7 @@ class LumiMqtt:
                     now = datetime.now()
                     should_send = (
                         self._light_last_sent is None or
-                        (now - self._light_last_sent).seconds >= self._light_tele_period
+                        (now - self._light_last_sent).seconds >= self._light_notification_period
                     )
                     if should_send:
                         await self._publish_light(light)
