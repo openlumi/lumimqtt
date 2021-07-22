@@ -320,8 +320,9 @@ class LumiMqtt:
 
             await aio.sleep(period)
 
-    async def _publish_sensor(self, sensor: Sensor, value=False):
-        value = value or sensor.get_value()
+    async def _publish_sensor(self, sensor: Sensor, value=None):
+        if value is None:
+            value = sensor.get_value()
         await self._client.publish(
             aio_mqtt.PublishableMessage(
                 topic_name=self._get_topic(sensor.topic),
