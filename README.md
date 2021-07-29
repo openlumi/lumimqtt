@@ -67,6 +67,24 @@ Values in `<>` must be replaced.
 [List of GPIOs.](https://github.com/openlumi/xiaomi-gateway-openwrt#gpio)
 [List of device classes.](https://www.home-assistant.io/integrations/binary_sensor/#device-class)
 
+### Custom commands
+
+You can add an extra section with custom commands that are executed with 
+mqtt topics. Every command is exported as a switch entity in Home Assistant.
+If json is passed to the set topic, the command will be interpolated with 
+the values. Plain text is passed as {text} variable 
+```json
+{
+    <your configuration>,
+    "custom_commands": {
+      "tts": "echo \"Test TTS without MPD component for home assistant\" | python3 -c 'from urllib.parse import quote_plus;from sys import stdin;print(\"wget -O /tmp/tts.mp3 -U Mozilla \\\"http://translate.google.com/translate_tts?q=\"+quote_plus(stdin.read()[:100])+\"&ie=UTF-8&tl=en&total=1&idx=0&client=tw-ob&prev=input&ttsspeed=1\\\" && amixer set Master 200 && mpg123 /tmp/tts.mp3\")' | sh 2> /dev/null",
+      "tts_interpolate": "echo \"{text}\" | python3 -c 'from urllib.parse import quote_plus;from sys import stdin;print(\"wget -O /tmp/tts.mp3 -U Mozilla \\\"http://translate.google.com/translate_tts?q=\"+quote_plus(stdin.read()[:100])+\"&ie=UTF-8&tl=en&total=1&idx=0&client=tw-ob&prev=input&ttsspeed=1\\\" && amixer set Master {volume} && mpg123 /tmp/tts.mp3\")' | sh 2> /dev/null",
+      "restart_lumimqtt": "/etc/init.d/lumimqtt restart",
+      "reboot": "/sbin/reboot"
+    }
+}
+```
+
 ## OpenWrt installation
 
 ```sh 

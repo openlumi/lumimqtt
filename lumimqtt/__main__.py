@@ -51,7 +51,7 @@ def main():
         'sensor_threshold': 50,  # 5% of illuminance sensor
         'sensor_debounce_period': 60,  # 1 minute
         'light_transition_period': 1.0,  # second
-        'light_notification_period': 60, # 1 minute
+        'light_notification_period': 60,  # 1 minute
         **config,
     }
 
@@ -75,7 +75,10 @@ def main():
         light_notification_period=float(config['light_notification_period']),
     )
 
-    for device in devices(config.get('binary_sensors', {})):
+    for device in devices(
+        binary_sensors=config.get('binary_sensors', {}),
+        custom_commands=config.get('custom_commands', {}),
+    ):
         server.register(device)
 
     try:

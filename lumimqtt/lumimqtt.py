@@ -14,6 +14,7 @@ import aio_mqtt
 
 from .__version__ import version
 from .button import Button
+from .commands import Command
 from .device import Device
 from .light import Light
 from .sensors import BinarySensor, Sensor
@@ -78,6 +79,7 @@ class LumiMqtt:
         self.sensors: ty.List[Sensor] = []
         self.lights: ty.List[Light] = []
         self.buttons: ty.List[Button] = []
+        self.custom_commands: ty.List[Command] = []
 
         self._debounce_sensors: ty.Dict[Sensor, DebounceSensor] = {}
 
@@ -120,6 +122,7 @@ class LumiMqtt:
             Sensor: self.sensors,
             Button: self.buttons,
             Light: self.lights,
+            Command: self.custom_commands,
         }
         for typ, array in mapping.items():
             if isinstance(device, typ):
@@ -134,7 +137,8 @@ class LumiMqtt:
     @property
     def subscribed_topics(self):
         # TODO: add SOUND/TTS topics ?
-        return (self._get_topic(light.topic_set) for light in self.lights)
+        return [self._get_topic(light.topic_set) for light in self.lights] + \
+            [self._get_topic(cmd.topic_set) for cmd in self.custom_commands]
 
     async def _handle_messages(self) -> None:
         async for message in self._client.delivered_messages(
@@ -147,28 +151,62 @@ class LumiMqtt:
                 for _light in self.lights:
                     if message.topic_name == self._get_topic(_light.topic_set):
                         light = _light
-                if not light:
-                    logger.error("Invalid topic for light")
+                if light:
+                    try:
+                        value = json.loads(message.payload)
+                    except ValueError as e:
+                        logger.exception(str(e))
+                        break
+
+                    try:
+                        await light.set(value, self._light_transition_period)
+                        await self._publish_light(light)
+                    except aio_mqtt.ConnectionClosedError as e:
+                        logger.error("Connection closed", exc_info=e)
+                        await self._client.wait_for_connect()
+                        continue
+
+                    except Exception as e:
+                        logger.error(
+                            "Unhandled exception during echo "
+                            "message publishing",
+                            exc_info=e)
                     break
 
-                try:
-                    value = json.loads(message.payload)
-                except ValueError as e:
-                    logger.exception(str(e))
+                command: ty.Optional[Command] = None
+                for _command in self.custom_commands:
+                    if message.topic_name == self._get_topic(
+                            _command.topic_set,
+                    ):
+                        command = _command
+                if command:
+                    try:
+                        value = json.loads(message.payload)
+                    except ValueError:
+                        value = message.payload.decode()
+                    try:
+                        await command.set(value)
+                        await self._client.publish(
+                            aio_mqtt.PublishableMessage(
+                                topic_name=self._get_topic(command.topic),
+                                payload='OFF',
+                                qos=aio_mqtt.QOSLevel.QOS_1,
+                            ),
+                        )
+                    except aio_mqtt.ConnectionClosedError as e:
+                        logger.error("Connection closed", exc_info=e)
+                        await self._client.wait_for_connect()
+                        continue
+
+                    except Exception as e:
+                        logger.error(
+                            "Unhandled exception during echo "
+                            "message publishing",
+                            exc_info=e,
+                        )
                     break
 
-                try:
-                    await light.set(value, self._light_transition_period)
-                    await self._publish_light(light)
-                except aio_mqtt.ConnectionClosedError as e:
-                    logger.error("Connection closed", exc_info=e)
-                    await self._client.wait_for_connect()
-                    continue
-
-                except Exception as e:
-                    logger.error(
-                        "Unhandled exception during echo message publishing",
-                        exc_info=e)
+                logger.error("Invalid topic for light")
                 break
 
     async def send_config(self):
@@ -270,6 +308,20 @@ class LumiMqtt:
                     retain=True,
                 ),
             )
+        for command in self.custom_commands:
+            await self._client.publish(
+                aio_mqtt.PublishableMessage(
+                    topic_name=f'homeassistant/switch/'
+                               f'{self.dev_id}_{command.name}/config',
+                    payload=json.dumps({
+                        **get_generic_vals(command.name),
+                        'state_topic': self._get_topic(command.topic),
+                        'command_topic': self._get_topic(command.topic_set),
+                    }),
+                    qos=aio_mqtt.QOSLevel.QOS_1,
+                    retain=True,
+                ),
+            )
 
     async def _periodic_publish(self, period=1):
         while True:
@@ -305,7 +357,8 @@ class LumiMqtt:
                     now = datetime.now()
                     should_send = (
                         self._light_last_sent is None or
-                        (now - self._light_last_sent).seconds >= self._light_notification_period
+                        (now - self._light_last_sent).seconds >=
+                        self._light_notification_period
                     )
                     if should_send:
                         await self._publish_light(light)
