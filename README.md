@@ -8,6 +8,31 @@ sensor over MQTT
 Default config should be located in `/etc/lumimqtt.json` or 
 can be overridden with `LUMIMQTT_CONFIG` environment variable.
 
+
+## Interaction
+
+### Default devices
+
+|      Action      |         Topic         |                Payload                |                                                          Expected values          |
+|:----------------:|:---------------------:|:-------------------------------------:|:---------------------------------------------------------------------------------:|
+| Read light state | lumi/&lt;ID&gt;/light       |                                       | {"state": "ON", "brightness": 255, "color": {"r": 255, "g": 0, "b": 0}}     |
+| Switch light     | lumi/&lt;ID&gt;/light/set   | {"state": "ON"}                       |                                                                             |
+| Set light color  | lumi/&lt;ID&gt;/light/set   | {"color": {"r": 255, "g": 0, "b": 0}} |                                                                             |
+| Set brightness   | lumi/&lt;ID&gt;/light/set   | {"brightness": 255}                   |                                                                             |
+| Set color or brigthness with 10 seconds transition | lumi/&lt;ID&gt;/light/set | {"color": {"r": 255, "g": 0, "b": 0}, "brightness": 100, "transition": 10} |        |
+| Read illuminance | lumi/&lt;ID&gt;/illuminance |                                       | 0-1000                                                                      |
+| Button           | lumi/&lt;ID&gt;/btn0/action | | single, double, triple, quadruple, many,<br>hold, double_hold, triple_hold, quadruple_hold, many_hold,<br>release |
+
+
+
+### Binary sensors (soldered to GPIO points)
+
+|      Action      |          Topic          | Expected values |
+|:----------------:|:-----------------------:|:---------------:|
+| Read GPIO sensor | lumi/&lt;ID&gt;/<SENSOR_NAME> | ON/OFF          |
+
+
+## Run application
 Example run command:
 
 ```sh 
@@ -77,6 +102,7 @@ the values. Plain text is passed as {text} variable
 {
     <your configuration>,
     "custom_commands": {
+      "blink": "for i in 0 255 0 255 0 255 0; do echo $i > /sys/class/leds/{color}/brightness; sleep 1; done",
       "tts": "echo \"Test TTS without MPD component for home assistant\" | python3 -c 'from urllib.parse import quote_plus;from sys import stdin;print(\"wget -O /tmp/tts.mp3 -U Mozilla \\\"http://translate.google.com/translate_tts?q=\"+quote_plus(stdin.read()[:100])+\"&ie=UTF-8&tl=en&total=1&idx=0&client=tw-ob&prev=input&ttsspeed=1\\\" && amixer set Master 200 && mpg123 /tmp/tts.mp3\")' | sh 2> /dev/null",
       "tts_interpolate": "echo \"{text}\" | python3 -c 'from urllib.parse import quote_plus;from sys import stdin;print(\"wget -O /tmp/tts.mp3 -U Mozilla \\\"http://translate.google.com/translate_tts?q=\"+quote_plus(stdin.read()[:100])+\"&ie=UTF-8&tl=en&total=1&idx=0&client=tw-ob&prev=input&ttsspeed=1\\\" && amixer set Master {volume} && mpg123 /tmp/tts.mp3\")' | sh 2> /dev/null",
       "restart_lumimqtt": "/etc/init.d/lumimqtt restart",
@@ -84,6 +110,16 @@ the values. Plain text is passed as {text} variable
     }
 }
 ```
+
+#### Usage examples
+
+|             Action             |              Topic             |                   Payload                         |
+|:------------------------------:|:------------------------------:|:-------------------------------------------------:|
+| Run command "blink"            | lumi/&lt;ID&gt;/blink/set            | {"color": "red"}                            |
+| Run command "tts"              | lumi/&lt;ID&gt;/tts/set              | &lt;ANYTHING&gt;                            |
+| Run command "tts_interpolate"  | lumi/&lt;ID&gt;/tts_interpolate/set  | {"text": "Hi, it is a test", "volume": 200} |
+| Run command "restart_lumimqtt" | lumi/&lt;ID&gt;/restart_lumimqtt/set | &lt;ANYTHING&gt;                            |
+| Run command "reboot"           | lumi/&lt;ID&gt;/reboot/set           | &lt;ANYTHING&gt;                            |
 
 ## OpenWrt installation
 
