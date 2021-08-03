@@ -76,7 +76,7 @@ class LumiMqtt:
             loop=self._loop,
             client_id_prefix='lumimqtt_',
         )
-        self._tasks = []
+        self._tasks: ty.List[aio.Future] = []
 
         self.sensors: ty.List[Sensor] = []
         self.lights: ty.List[Light] = []
@@ -120,7 +120,7 @@ class LumiMqtt:
     def register(self, device: Device):
         if not device:
             return
-        mapping = {
+        mapping: dict[type, list] = {
             Sensor: self.sensors,
             Button: self.buttons,
             Light: self.lights,

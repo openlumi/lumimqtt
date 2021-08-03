@@ -4,6 +4,7 @@ LUMI light control
 import asyncio as aio
 import logging
 import os
+import typing as ty
 
 from .device import Device
 
@@ -45,7 +46,7 @@ class Light(Device):
             'b': self.blue,
         }
 
-        self.state = {
+        self.state: ty.Dict[str, ty.Any] = {
             'state': 'ON' if any((self.red.brightness,
                                  self.green.brightness,
                                  self.blue.brightness)) else 'OFF',

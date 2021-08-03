@@ -22,7 +22,7 @@ class BinarySensor(Sensor):
     """
     Binary sensor (GPIO)
     """
-    MQTT_VALUES = {}
+    MQTT_VALUES: dict = {}
 
     def __init__(self, name, gpio, topic, device_class=None):
         device_file = f"/sys/class/gpio/gpio{gpio}/value"

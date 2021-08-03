@@ -2,10 +2,11 @@
 Basic Device class
 """
 import os
+import typing as ty
 
 
 class Device:
-    MQTT_VALUES = None
+    MQTT_VALUES: ty.Optional[ty.Dict] = None
 
     def __init__(self, name, device_file, topic=None):
         self.name = name

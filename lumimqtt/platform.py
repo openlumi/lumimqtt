@@ -3,7 +3,7 @@ LUMI platform specification
 """
 import logging
 import os
-from typing import List
+import typing as ty
 
 from .button import Button
 from .commands import Command
@@ -14,8 +14,8 @@ from .sensors import BinarySensor, IlluminanceSensor
 logger = logging.getLogger(__name__)
 
 
-def sensors(binary_sensors: dict) -> List[Device]:
-    sensors_ = list()
+def sensors(binary_sensors: dict) -> ty.List[Device]:
+    sensors_: ty.List[Device] = []
     for name, device_file in (
             ('illuminance', '/sys/bus/iio/devices/iio:device0/in_voltage5_raw'),
     ):
@@ -36,8 +36,8 @@ def sensors(binary_sensors: dict) -> List[Device]:
     return sensors_
 
 
-def buttons() -> List[Device]:
-    buttons_ = list()
+def buttons() -> ty.List[Device]:
+    buttons_: ty.List[Device] = []
     for name, device_file, scancodes in (
             ('btn0', '/dev/input/event0', ['BTN_0']),
     ):
@@ -48,7 +48,7 @@ def buttons() -> List[Device]:
     return buttons_
 
 
-def lights() -> List[Device]:
+def lights() -> ty.List[Device]:
     led_r = '/sys/class/leds/red'
     led_g = '/sys/class/leds/green'
     led_b = '/sys/class/leds/blue'
@@ -68,7 +68,7 @@ def lights() -> List[Device]:
             'green': led_g,
             'blue': led_b,
         }
-    lights_ = list()
+    lights_: ty.List[Device] = []
     for name, device_dirs in (
             ('light', leds),
     ):
@@ -76,8 +76,8 @@ def lights() -> List[Device]:
     return lights_
 
 
-def commands(params) -> List[Device]:
-    commands_ = []
+def commands(params) -> ty.List[Device]:
+    commands_: ty.List[Device] = []
     for topic, command in params.items():
         cmd_config = {
             'name': topic,
