@@ -48,6 +48,7 @@ def main():
         'topic_root': 'lumi/{device_id}',
         'mqtt_host': 'localhost',
         'mqtt_port': 1883,
+        'auto_discovery': True,  # create homeassistant discovery topics
         'sensor_threshold': 50,  # 5% of illuminance sensor
         'sensor_debounce_period': 60,  # 1 minute
         'light_transition_period': 1.0,  # second
@@ -68,6 +69,7 @@ def main():
         port=config['mqtt_port'],
         user=config.get('mqtt_user'),
         password=config.get('mqtt_password'),
+        auto_discovery=config['auto_discovery'],
         sensor_retain=config.get('sensor_retain', False),
         sensor_threshold=int(config['sensor_threshold']),
         sensor_debounce_period=int(config['sensor_debounce_period']),

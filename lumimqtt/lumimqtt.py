@@ -39,6 +39,7 @@ class LumiMqtt:
             password: ty.Optional[str] = None,
             reconnection_interval: int = 10,
             *,
+            auto_discovery: bool,
             sensor_retain: bool,
             sensor_threshold: int,
             sensor_debounce_period: int,
@@ -61,6 +62,7 @@ class LumiMqtt:
             retain=True,
         )
 
+        self._auto_discovery = auto_discovery
         self._sensor_retain = sensor_retain
         self._sensor_threshold = sensor_threshold
         self._sensor_debounce_period = sensor_debounce_period
@@ -478,7 +480,8 @@ class LumiMqtt:
                     (t, aio_mqtt.QOSLevel.QOS_1)
                     for t in self.subscribed_topics
                 ])
-                await self.send_config()
+                if self._auto_discovery:
+                    await self.send_config()
 
                 for light in self.lights:
                     await self._publish_light(light)
