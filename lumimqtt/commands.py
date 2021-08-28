@@ -38,7 +38,10 @@ class Command(Device):
 
     @staticmethod
     def quote(s):
-        return s.replace('"', '\\"').replace("'", "\\'").replace('$', '')
+        try:
+            return str(s).replace('"', '\\"').replace("'", "\\'").replace('$', '')
+        except:
+            return ""
 
     async def run_command(self, value):
         if isinstance(value, dict):
