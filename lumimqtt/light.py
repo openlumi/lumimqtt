@@ -71,6 +71,11 @@ class Light(Device):
         start_brightness = self.state['brightness']
         start_color = self.state['color']
 
+        # workaround for openhab light switch
+        if color['r'] == color['g'] == color['b'] == 0:
+            color = self.state['color']
+            state = 'OFF'
+
         if self.state['state'].lower() == 'off':
             start_brightness = 0
             if color['r'] == 0 and color['g'] == 0 and color['b'] == 0:
