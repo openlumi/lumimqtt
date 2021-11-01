@@ -31,7 +31,7 @@ class Light(Device):
     """
     Light control
     """
-    RGB = True
+    COLOR_MODE = 'rgb'
     BRIGHTNESS = True
 
     def __init__(self, name, devices: dict, topic):
@@ -52,6 +52,7 @@ class Light(Device):
                                  self.blue.brightness)) else 'OFF',
             'brightness': 255,
             'color': {},
+            'color_mode': self.COLOR_MODE,
         }
         for c, led in self.leds.items():
             self.state['color'][c] = int(
@@ -116,4 +117,5 @@ class Light(Device):
             'state': state,
             'brightness': target_brightness,
             'color': color,
+            'color_mode': self.COLOR_MODE,
         }

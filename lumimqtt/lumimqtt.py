@@ -301,7 +301,8 @@ class LumiMqtt:
                     payload=json.dumps({
                         **get_generic_vals(light.name),
                         'schema': 'json',
-                        'rgb': light.RGB,
+                        'color_mode': True,
+                        'supported_color_modes': [light.COLOR_MODE],
                         'brightness': light.BRIGHTNESS,
                         'state_topic': self._get_topic(light.topic),
                         'command_topic': self._get_topic(light.topic_set),
