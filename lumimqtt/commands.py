@@ -39,8 +39,10 @@ class Command(Device):
     @staticmethod
     def quote(s):
         try:
-            return str(s).replace('"', '\\"').replace("'", "\\'").replace('$', '')
-        except:
+            return str(s).replace('"', '\\"').replace("'", "\\'"). \
+                replace('$', '')
+        except Exception:
+            logger.exception('Error on escaping command')
             return ""
 
     async def run_command(self, value):
