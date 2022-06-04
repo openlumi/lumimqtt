@@ -19,17 +19,17 @@ setup(
     url='https://github.com/openlumi/lumimqtt/',
     install_requires=[
         'evdev>=1.0.0',
-        'aio-mqtt>=0.2.0',
+        'aio-mqtt-mod>=0.3.2',
     ],
     packages=['lumimqtt'],
     entry_points={
         'console_scripts': ['lumimqtt=lumimqtt.__main__:main'],
     },
     classifiers=[
-        'Programming Language :: Python :: 3.5',
-        'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
         'Programming Language :: Python :: 3 :: Only',
         'Topic :: Utilities',
     ],
