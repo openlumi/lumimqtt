@@ -58,12 +58,12 @@ class Command(Device):
         with self.fix_watcher():
             proc = await aio.create_subprocess_shell(
                 command,
-                loop=aio.get_event_loop(),
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
             )
         await proc.wait()
 
     async def set(self, value):
-        logger.info(f'{self.name}: run command with params: {value}')
+        logger.info(f'{self.name}: run command with params: {value}.')
         await self.run_command(value)
+        logger.info(f'{self.name} is done.')
