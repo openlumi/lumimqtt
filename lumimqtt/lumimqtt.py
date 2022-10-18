@@ -1,4 +1,3 @@
-
 """
 LUMI MQTT handler
 """
@@ -20,6 +19,9 @@ from .light import Light
 from .sensors import BinarySensor, Sensor
 
 logger = logging.getLogger(__name__)
+
+
+RECONNECTION_LIMIT = 5
 
 
 @dataclass
@@ -142,12 +144,59 @@ class LumiMqtt:
         return [self._get_topic(light.topic_set) for light in self.lights] + \
             [self._get_topic(cmd.topic_set) for cmd in self.custom_commands]
 
+    async def _command_handler(self, command: Command, value):
+        await command.set(value)
+        reconnection_counter = 0
+        while True:
+            try:
+                await self._client.publish(
+                    aio_mqtt.PublishableMessage(
+                        topic_name=self._get_topic(command.topic),
+                        payload='OFF',
+                        qos=aio_mqtt.QOSLevel.QOS_1,
+                    ),
+                )
+                return
+            except aio_mqtt.ConnectionClosedError:
+                logger.exception("Connection closed")
+                reconnection_counter += 1
+                if reconnection_counter >= RECONNECTION_LIMIT:
+                    raise
+                await self._client.wait_for_connect()
+
+    async def _light_handler(self, light: Light, value):
+        await light.set(value, self._light_transition_period)
+        reconnection_counter = 0
+        while True:
+            try:
+                await self._publish_light(light)
+                return
+            except aio_mqtt.ConnectionClosedError:
+                logger.exception("Connection closed")
+                reconnection_counter += 1
+                if reconnection_counter >= RECONNECTION_LIMIT:
+                    raise
+                await self._client.wait_for_connect()
+
     async def _handle_messages(self) -> None:
-        async for message in self._client.delivered_messages(
-                f'{self._topic_root}/#',
-        ):
-            while True:
+        running_message_tasks: list[aio.Task] = []
+        try:
+            async for message in self._client.delivered_messages(
+                    f'{self._topic_root}/#',
+            ):
+                for task in running_message_tasks:
+                    if task.done():
+                        try:
+                            task.result()
+                        except Exception:
+                            logger.exception(
+                                "Unhandled exception during echo "
+                                "message publishing",
+                            )
+                        finally:
+                            running_message_tasks.remove(task)
                 if message.topic_name not in self.subscribed_topics:
+                    logger.error("Invalid topic for light")
                     continue
                 light: ty.Optional[Light] = None
                 for _light in self.lights:
@@ -158,23 +207,10 @@ class LumiMqtt:
                         value = json.loads(message.payload)
                     except ValueError as e:
                         logger.exception(str(e))
-                        break
-
-                    try:
-                        await light.set(value, self._light_transition_period)
-                        await self._publish_light(light)
-                    except aio_mqtt.ConnectionClosedError as e:
-                        logger.error("Connection closed", exc_info=e)
-                        await self._client.wait_for_connect()
                         continue
-
-                    except Exception as e:
-                        logger.error(
-                            "Unhandled exception during echo "
-                            "message publishing",
-                            exc_info=e)
-                    break
-
+                    new_light_task = self._loop.create_task(self._light_handler(light, value))
+                    running_message_tasks.append(new_light_task)
+                    continue
                 command: ty.Optional[Command] = None
                 for _command in self.custom_commands:
                     if message.topic_name == self._get_topic(
@@ -186,30 +222,21 @@ class LumiMqtt:
                         value = json.loads(message.payload)
                     except ValueError:
                         value = message.payload.decode()
+                    new_command_task = self._loop.create_task(self._command_handler(command, value))
+                    running_message_tasks.append(new_command_task)
+        except aio.CancelledError:
+            for task in running_message_tasks:
+                if task.done():
                     try:
-                        await command.set(value)
-                        await self._client.publish(
-                            aio_mqtt.PublishableMessage(
-                                topic_name=self._get_topic(command.topic),
-                                payload='OFF',
-                                qos=aio_mqtt.QOSLevel.QOS_1,
-                            ),
-                        )
-                    except aio_mqtt.ConnectionClosedError as e:
-                        logger.error("Connection closed", exc_info=e)
-                        await self._client.wait_for_connect()
-                        continue
-
-                    except Exception as e:
-                        logger.error(
-                            "Unhandled exception during echo "
-                            "message publishing",
-                            exc_info=e,
-                        )
-                    break
-
-                logger.error("Invalid topic for light")
-                break
+                        task.result()
+                    except Exception:
+                        pass
+                else:
+                    task.cancel()
+                    try:
+                        await task
+                    except (Exception, aio.CancelledError):
+                        pass
 
     async def send_config(self):
         device = {
