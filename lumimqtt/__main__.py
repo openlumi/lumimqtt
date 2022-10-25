@@ -2,6 +2,7 @@ import asyncio as aio
 import json
 import logging
 import os
+import signal
 from uuid import getnode as get_mac
 
 from .__version__ import version
@@ -29,9 +30,12 @@ def read_mac():
     return mac
 
 
-def main():
+def signal_handler():
+    raise KeyboardInterrupt()
+
+
+async def amain():
     logging.basicConfig(level='INFO')
-    loop = aio.new_event_loop()
 
     os.environ.setdefault('LUMIMQTT_CONFIG', '/etc/lumimqtt.json')
     config = {}
@@ -62,7 +66,6 @@ def main():
         replace('{MAC}', device_id)  # support old configs
     server = LumiMqtt(
         reconnection_interval=10,
-        loop=loop,
         device_id=config['device_id'],
         topic_root=topic_root,
         host=config['mqtt_host'],
@@ -83,16 +86,22 @@ def main():
     ):
         server.register(device)
 
+    loop = aio.get_running_loop()
+    for _signal in (signal.SIGTERM, signal.SIGQUIT, signal.SIGHUP):
+        loop.add_signal_handler(_signal, signal_handler)
+
     try:
         logger.info(f'Start lumimqtt {version}')
-        loop.run_until_complete(server.start())
+        await server.start()
+    finally:
+        await server.close()
+
+
+def main():
+    try:
+        aio.run(amain())
     except KeyboardInterrupt:
         pass
-
-    finally:
-        loop.run_until_complete(server.close())
-        loop.run_until_complete(loop.shutdown_asyncgens())
-        loop.close()
 
 
 if __name__ == '__main__':

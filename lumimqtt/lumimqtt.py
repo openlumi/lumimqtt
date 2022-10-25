@@ -47,7 +47,6 @@ class LumiMqtt:
             sensor_debounce_period: int,
             light_transition_period: float,
             light_notification_period: float,
-            loop: ty.Optional[aio.AbstractEventLoop] = None,
     ) -> None:
         self.dev_id = device_id
         self._topic_root = topic_root
@@ -71,11 +70,9 @@ class LumiMqtt:
         self._light_transition_period = light_transition_period
         self._light_notification_period = light_notification_period
         self._light_last_sent = None
-
         self._reconnection_interval = reconnection_interval
-        self._loop = loop or aio.get_event_loop()
         self._client = aio_mqtt.Client(
-            loop=self._loop,
+            loop=aio.get_running_loop(),
             client_id_prefix='lumimqtt_',
         )
         self._tasks: ty.List[aio.Future] = []
@@ -89,33 +86,19 @@ class LumiMqtt:
 
     async def start(self):
         self._tasks = [
-            self._loop.create_task(self._connect_forever()),
-            self._loop.create_task(self._handle_messages()),
-            self._loop.create_task(self._periodic_publish()),
-            self._loop.create_task(self._handle_buttons()),
+            aio.create_task(self._connect_forever()),
+            aio.create_task(self._handle_messages()),
+            aio.create_task(self._periodic_publish()),
+            aio.create_task(self._handle_buttons()),
         ]
-        finished, unfinished = await aio.wait(
+        finished, _ = await aio.wait(
             self._tasks,
             return_when=aio.FIRST_COMPLETED,
         )
-        for t in unfinished:
-            t.cancel()
-            try:
-                await t
-            except aio.CancelledError:
-                pass
         for t in finished:
             t.result()
 
     async def close(self) -> None:
-        for task in self._tasks:
-            if task.done():
-                continue
-            task.cancel()
-            try:
-                await task
-            except aio.CancelledError:
-                pass
         if self._client.is_connected():
             await self._client.disconnect()
 
@@ -208,7 +191,7 @@ class LumiMqtt:
                     except ValueError as e:
                         logger.exception(str(e))
                         continue
-                    new_light_task = self._loop.create_task(self._light_handler(light, value))
+                    new_light_task = aio.create_task(self._light_handler(light, value))
                     running_message_tasks.append(new_light_task)
                     continue
                 command: ty.Optional[Command] = None
@@ -222,7 +205,7 @@ class LumiMqtt:
                         value = json.loads(message.payload)
                     except ValueError:
                         value = message.payload.decode()
-                    new_command_task = self._loop.create_task(self._command_handler(command, value))
+                    new_command_task = aio.create_task(self._command_handler(command, value))
                     running_message_tasks.append(new_command_task)
         except aio.CancelledError:
             for task in running_message_tasks:
