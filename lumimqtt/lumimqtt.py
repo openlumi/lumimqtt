@@ -42,6 +42,7 @@ class LumiMqtt:
             reconnection_interval: int = 10,
             *,
             auto_discovery: bool,
+            light_retain: bool,
             sensor_retain: bool,
             sensor_threshold: int,
             sensor_debounce_period: int,
@@ -64,6 +65,7 @@ class LumiMqtt:
         )
 
         self._auto_discovery = auto_discovery
+        self._light_retain = light_retain
         self._sensor_retain = sensor_retain
         self._sensor_threshold = sensor_threshold
         self._sensor_debounce_period = sensor_debounce_period
@@ -404,6 +406,7 @@ class LumiMqtt:
                 topic_name=self._get_topic(light.topic),
                 payload=json.dumps(light.state),
                 qos=aio_mqtt.QOSLevel.QOS_1,
+                retain=self._light_retain,
             ),
         )
 

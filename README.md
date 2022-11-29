@@ -49,6 +49,7 @@ The configuration file is a JSON with the following content:
     "mqtt_password": "",
     "topic_root": "lumi/{device_id}",
     "auto_discovery": true,
+    "light_retain": false,
     "sensor_retain": false,
     "sensor_threshold": 50,
     "sensor_debounce_period": 60,
@@ -63,6 +64,8 @@ representing a MAC address of the first network interface.
 
 `auto_discovery` set to `false` to disable creating autodiscovery topics that
 are user by Home Assistant to discover entities.
+
+`light_retain` is option to enable storing light state on the broker
 
 `sensor_retain` is option to enable storing last sensor value on the broker
 

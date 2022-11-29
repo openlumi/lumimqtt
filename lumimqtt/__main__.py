@@ -73,6 +73,7 @@ async def amain():
         user=config.get('mqtt_user'),
         password=config.get('mqtt_password'),
         auto_discovery=config['auto_discovery'],
+        light_retain=config.get('light_retain', False),
         sensor_retain=config.get('sensor_retain', False),
         sensor_threshold=int(config['sensor_threshold']),
         sensor_debounce_period=int(config['sensor_debounce_period']),
