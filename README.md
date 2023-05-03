@@ -74,6 +74,13 @@ changes
 `light_transition_period` value in seconds to set default transition for light
 switching or light change. Use `0` to remove the transition.
 
+
+### SSL connection
+
+To use SSL connection, you need to set `mqtt_cert` and `mqtt_key`, and optional `mqtt_ca` with corresponding paths to files.
+
+### Custom sensors
+
 You can also use GPIO(s) as binary sensor(s). Add this to configuration:
 
 ```json

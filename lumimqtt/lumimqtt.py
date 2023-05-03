@@ -9,7 +9,6 @@ import typing as ty
 from dataclasses import dataclass
 from datetime import datetime
 
-import ssl
 import aio_mqtt
 
 from .__version__ import version
@@ -474,6 +473,8 @@ class LumiMqtt:
                 client_id = f'lumimqtt_{self.dev_id}'
                 context = None
                 if self._mqtt_cert is not None and self._mqtt_key is not None:
+                    import ssl
+
                     context = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
                     if self._mqtt_ca is not None:
                         context.load_verify_locations(self._mqtt_ca)
