@@ -9,6 +9,7 @@ import typing as ty
 from dataclasses import dataclass
 from datetime import datetime
 
+import ssl
 import aio_mqtt
 
 from .__version__ import version
@@ -39,6 +40,9 @@ class LumiMqtt:
             port: int = None,
             user: ty.Optional[str] = None,
             password: ty.Optional[str] = None,
+            ca: ty.Optional[str] = None,
+            cert: ty.Optional[str] = None,
+            key: ty.Optional[str] = None,
             reconnection_interval: int = 10,
             *,
             auto_discovery: bool,
@@ -55,6 +59,9 @@ class LumiMqtt:
         self._mqtt_port = port
         self._mqtt_user = user
         self._mqtt_password = password
+        self._mqtt_ca = ca
+        self._mqtt_cert = cert
+        self._mqtt_key = key
 
         self._will_message = aio_mqtt.PublishableMessage(
             topic_name=self._topic_lwt,
@@ -465,9 +472,16 @@ class LumiMqtt:
         while True:
             try:
                 client_id = f'lumimqtt_{self.dev_id}'
+                context = None
+                if self._mqtt_cert is not None and self._mqtt_key is not None:
+                    context = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
+                    if self._mqtt_ca is not None:
+                        context.load_verify_locations(self._mqtt_ca)
+                    context.load_cert_chain(self._mqtt_cert, self._mqtt_key)
                 connect_result = await self._client.connect(
                     host=self._mqtt_host,
                     port=self._mqtt_port,
+                    ssl=context,
                     username=self._mqtt_user,
                     password=self._mqtt_password,
                     client_id=client_id,
