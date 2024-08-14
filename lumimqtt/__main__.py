@@ -13,19 +13,23 @@ logger = logging.getLogger(__name__)
 
 
 def read_mac():
-    # We try to read mac address from wlan0 interface at first
+    # We try to read mac address from first interface at first
     # if the file is absent or empty, use generic uuid.getnode()
+    ifaces = [x for x in sorted(os.listdir('/sys/class/net/')) if x != 'lo']
+    if ifaces:
+        addr_file = f'/sys/class/net/{ifaces[0]}/address'
+        try:
+            with open(addr_file, 'r') as f:
+                mac = f.readline().strip('\n')
+        except FileNotFoundError:
+            pass
+        else:
+            return f"0x{mac.replace(':', '')}"
 
-    addr_file = '/sys/class/net/wlan0/address'
-    try:
-        with open(addr_file, 'r') as f:
-            mac = f.readline().strip('\n')
-        mac = f"0x{mac.replace(':', '')}"
-    except FileNotFoundError:
-        mac = get_mac()
-        if (mac >> 40) % 2:
-            logger.error("Can't get a valid mac, use randomly generated one")
-        mac = hex(mac)
+    mac = get_mac()
+    if (mac >> 40) % 2:
+        logger.error("Can't get a valid mac, use randomly generated one")
+    mac = hex(mac)
 
     return mac
 
