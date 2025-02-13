@@ -19,9 +19,12 @@ def sensors(binary_sensors: dict) -> ty.List[Device]:
     for name, device_file in (
             ('illuminance', '/sys/bus/iio/devices/iio:device0/in_voltage5_raw'),
     ):
-        sensors_.append(IlluminanceSensor(name=name,
-                                          device_file=device_file,
-                                          topic=name))
+        if os.path.exists(device_file):
+            sensors_.append(IlluminanceSensor(
+                name=name,
+                device_file=device_file,
+                topic=name,
+            ))
 
     for binary_sensor, sensor_options in binary_sensors.items():
         sensor_config = {
@@ -41,10 +44,13 @@ def buttons() -> ty.List[Device]:
     for name, device_file, scancodes in (
             ('btn0', '/dev/input/event0', ['BTN_0']),
     ):
-        buttons_.append(Button(name=name,
-                               device_file=device_file,
-                               topic=name,
-                               scancodes=scancodes))
+        if os.path.exists(device_file):
+            buttons_.append(Button(
+                name=name,
+                device_file=device_file,
+                topic=name,
+                scancodes=scancodes,
+            ))
     return buttons_
 
 
@@ -70,9 +76,10 @@ def lights() -> ty.List[Device]:
         }
     lights_: ty.List[Device] = []
     for name, device_dirs in (
-            ('light', leds),
+        ('light', leds),
     ):
-        lights_.append(Light(name=name, devices=device_dirs, topic=name))
+        if all(os.path.exists(f) for f in device_dirs.values()):
+           lights_.append(Light(name=name, devices=device_dirs, topic=name))
     return lights_
 
 
