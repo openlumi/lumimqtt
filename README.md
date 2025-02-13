@@ -52,6 +52,7 @@ The configuration file is a JSON with the following content:
     "sensor_retain": false,
     "sensor_threshold": 50,
     "sensor_debounce_period": 60,
+    "legacy_color_mode": true,
     "light_transition_period": 1.0
 }
 ```
@@ -74,6 +75,7 @@ changes
 `light_transition_period` value in seconds to set default transition for light
 switching or light change. Use `0` to remove the transition.
 
+`legacy_color_mode` set to `false` to use with Home Assistant 2024.4 or newer
 
 ### SSL connection
 

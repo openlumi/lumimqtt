@@ -50,6 +50,7 @@ class LumiMqtt:
             sensor_debounce_period: int,
             light_transition_period: float,
             light_notification_period: float,
+            legacy_color_mode: bool,
     ) -> None:
         self.dev_id = device_id
         self._topic_root = topic_root
@@ -61,6 +62,7 @@ class LumiMqtt:
         self._mqtt_ca = ca
         self._mqtt_cert = cert
         self._mqtt_key = key
+        self._legacy_color_mode = legacy_color_mode
 
         self._will_message = aio_mqtt.PublishableMessage(
             topic_name=self._topic_lwt,
@@ -317,6 +319,10 @@ class LumiMqtt:
                     payload=json.dumps({
                         **get_generic_vals(light.name),
                         'schema': 'json',
+                        **(
+                            {'color_mode': bool(light.COLOR_MODE)}
+                            if self._legacy_color_mode else {}
+                        ),
                         'supported_color_modes': [light.COLOR_MODE],
                         'brightness': light.BRIGHTNESS,
                         'state_topic': self._get_topic(light.topic),

@@ -61,6 +61,7 @@ async def amain():
         'sensor_debounce_period': 60,  # 1 minute
         'light_transition_period': 1.0,  # second
         'light_notification_period': 60,  # 1 minute
+        'legacy_color_mode': True,  # for HA < 2024.4
         **config,
     }
 
@@ -85,6 +86,7 @@ async def amain():
         sensor_debounce_period=int(config['sensor_debounce_period']),
         light_transition_period=float(config['light_transition_period']),
         light_notification_period=float(config['light_notification_period']),
+        legacy_color_mode=bool(config['legacy_color_mode']),
     )
 
     for device in devices(
