@@ -199,7 +199,9 @@ class LumiMqtt:
                     except ValueError as e:
                         logger.exception(str(e))
                         continue
-                    new_light_task = aio.create_task(self._light_handler(light, value))
+                    new_light_task = aio.create_task(
+                        self._light_handler(light, value),
+                    )
                     running_message_tasks.append(new_light_task)
                     continue
                 command: ty.Optional[Command] = None
@@ -213,7 +215,9 @@ class LumiMqtt:
                         value = json.loads(message.payload)
                     except ValueError:
                         value = message.payload.decode()
-                    new_command_task = aio.create_task(self._command_handler(command, value))
+                    new_command_task = aio.create_task(
+                        self._command_handler(command, value),
+                    )
                     running_message_tasks.append(new_command_task)
         except aio.CancelledError:
             for task in running_message_tasks:
@@ -506,11 +510,12 @@ class LumiMqtt:
                         retain=True,
                     ),
                 )
-
-                await self._client.subscribe(*[
-                    (t, aio_mqtt.QOSLevel.QOS_1)
-                    for t in self.subscribed_topics
-                ])
+                topics = self.subscribed_topics
+                if topics:
+                    await self._client.subscribe(*[
+                        (t, aio_mqtt.QOSLevel.QOS_1)
+                        for t in topics
+                    ])
                 if self._auto_discovery:
                     await self.send_config()
 

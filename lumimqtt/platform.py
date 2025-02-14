@@ -79,7 +79,7 @@ def lights() -> ty.List[Device]:
         ('light', leds),
     ):
         if all(os.path.exists(f) for f in device_dirs.values()):
-           lights_.append(Light(name=name, devices=device_dirs, topic=name))
+            lights_.append(Light(name=name, devices=device_dirs, topic=name))
     return lights_
 
 
