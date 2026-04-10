@@ -6,6 +6,7 @@ import asyncio as aio
 import json
 import logging
 import typing as ty
+import sys
 from dataclasses import dataclass
 from datetime import datetime
 
@@ -44,6 +45,8 @@ class LumiMqtt:
             key: ty.Optional[str] = None,
             reconnection_interval: int = 10,
             *,
+            tls: bool,
+            verify_cert: bool,
             auto_discovery: bool,
             sensor_retain: bool,
             sensor_threshold: int,
@@ -59,6 +62,8 @@ class LumiMqtt:
         self._mqtt_port = port
         self._mqtt_user = user
         self._mqtt_password = password
+        self._mqtt_tls = tls
+        self._mqtt_verify_cert = verify_cert
         self._mqtt_ca = ca
         self._mqtt_cert = cert
         self._mqtt_key = key
@@ -481,13 +486,21 @@ class LumiMqtt:
             try:
                 client_id = f'lumimqtt_{self.dev_id}'
                 context = None
-                if self._mqtt_cert is not None and self._mqtt_key is not None:
+                if self._mqtt_tls or (
+                    self._mqtt_cert is not None and self._mqtt_key is not None
+                ):
                     import ssl
 
-                    context = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
+                    context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+                    if not self._mqtt_verify_cert:
+                        context.check_hostname = False
+                        context.verify_mode = ssl.CERT_NONE
                     if self._mqtt_ca is not None:
                         context.load_verify_locations(self._mqtt_ca)
-                    context.load_cert_chain(self._mqtt_cert, self._mqtt_key)
+                    else:
+                        context.load_default_certs()
+                    if self._mqtt_cert is not None and self._mqtt_key is not None:
+                        context.load_cert_chain(self._mqtt_cert, self._mqtt_key)
                 connect_result = await self._client.connect(
                     host=self._mqtt_host,
                     port=self._mqtt_port,
@@ -537,7 +550,15 @@ class LumiMqtt:
                 aio_mqtt.ConnectionLostError,
                 aio_mqtt.ConnectFailedError,
                 aio_mqtt.ServerDiedError,
-            ):
+            ) as e:
+                if (
+                    'ssl' in sys.modules
+                    and isinstance(e.__cause__, ssl.SSLCertVerificationError)
+                ):
+                    logger.error(
+                        "Certificate verification failed: %s",
+                        e.__cause__
+                    )
                 logger.error(
                     "Connection lost. Will retry in %d seconds",
                     self._reconnection_interval,

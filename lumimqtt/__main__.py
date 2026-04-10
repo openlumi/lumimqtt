@@ -56,6 +56,8 @@ async def amain():
         'topic_root': 'lumi/{device_id}',
         'mqtt_host': 'localhost',
         'mqtt_port': 1883,
+        'mqtt_tls': False,
+        'mqtt_verify_cert': True,
         'auto_discovery': True,  # create homeassistant discovery topics
         'sensor_threshold': 50,  # 5% of illuminance sensor
         'sensor_debounce_period': 60,  # 1 minute
@@ -77,6 +79,8 @@ async def amain():
         port=config['mqtt_port'],
         user=config.get('mqtt_user'),
         password=config.get('mqtt_password'),
+        tls=bool(config['mqtt_tls']),
+        verify_cert=bool(config['mqtt_verify_cert']),
         ca=config.get('mqtt_ca'),
         cert=config.get('mqtt_cert'),
         key=config.get('mqtt_key'),
