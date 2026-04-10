@@ -77,9 +77,18 @@ switching or light change. Use `0` to remove the transition.
 
 `legacy_color_mode` set to `false` to use with Home Assistant 2024.4 or newer
 
-### SSL connection
+### SSL/TLS connection
 
-To use SSL connection, you need to set `mqtt_cert` and `mqtt_key`, and optional `mqtt_ca` with corresponding paths to files.
+`mqtt_tls` (optional, boolean): Set to `true` to enable SSL/TLS connection.  Defaults to `false`.
+
+`mqtt_verify_cert` (optional, boolean): Set to `false` to disable verification of the server certificate, useful for self-signed certs. Defaults to `true`.
+
+`mqtt_ca` (optional, string): Path to a file of CA certificate in PEM format.
+
+`mqtt_cert` (optional, string): Path to a file of client certificate in PEM format.
+
+`mqtt_key` (optional, string): Path to a file of client private key in PEM format.
+
 
 ### Custom sensors
 
