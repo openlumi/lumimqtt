@@ -18,9 +18,18 @@ class Command(Device):
     Custom command control
     """
 
-    def __init__(self, name, device_file, topic):
+    def __init__(
+            self,
+            name,
+            device_file,
+            topic,
+            entity_type='switch',
+            auto_discovery=True,
+    ):
         super().__init__(name, device_file, topic)
         self.command = device_file
+        self.entity_type = entity_type
+        self.auto_discovery = auto_discovery
 
     @property
     def topic_set(self):

@@ -117,7 +117,7 @@ Values in `<>` must be replaced.
 ### Custom commands
 
 You can add an extra section with custom commands that are executed with 
-mqtt topics. Every command is exported as a switch entity in Home Assistant.
+mqtt topics. By default, commands are exported as switch entities in Home Assistant.
 If json is passed to the set topic, the command will be interpolated with 
 the values. Plain text is passed as {text} variable 
 ```json
@@ -132,6 +132,25 @@ the values. Plain text is passed as {text} variable
     }
 }
 ```
+
+Use an object to set command options. String commands are still supported:
+
+```json
+{
+    "custom_commands": {
+        "doorbell": {
+            "command": "mpg123 /etc/lumimqtt/doorbell.mp3",
+            "entity_type": "button"
+        },
+        "restart_lumimqtt": "/etc/init.d/lumimqtt restart"
+    }
+}
+```
+
+- `command`: required shell command.
+- `entity_type`: `switch` (default) or `button`.
+- `auto_discovery`: `false` disables discovery for this command (default: `true`).
+  MQTT commands still work; global discovery must be enabled to publish discovery.
 
 #### Usage examples
 

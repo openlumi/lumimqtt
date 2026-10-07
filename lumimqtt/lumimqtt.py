@@ -342,15 +342,19 @@ class LumiMqtt:
                 ),
             )
         for command in self.custom_commands:
+            if not command.auto_discovery:
+                continue
+            config = {
+                **get_generic_vals(command.name),
+                'command_topic': self._get_topic(command.topic_set),
+            }
+            if command.entity_type == 'switch':
+                config['state_topic'] = self._get_topic(command.topic)
             await self._client.publish(
                 aio_mqtt.PublishableMessage(
-                    topic_name=f'homeassistant/switch/'
+                    topic_name=f'homeassistant/{command.entity_type}/'
                                f'{self.dev_id}_{command.name}/config',
-                    payload=json.dumps({
-                        **get_generic_vals(command.name),
-                        'state_topic': self._get_topic(command.topic),
-                        'command_topic': self._get_topic(command.topic_set),
-                    }),
+                    payload=json.dumps(config),
                     qos=aio_mqtt.QOSLevel.QOS_1,
                     retain=True,
                 ),

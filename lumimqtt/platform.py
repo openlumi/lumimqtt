@@ -91,7 +91,22 @@ def commands(params) -> ty.List[Device]:
             'topic': topic,
             'device_file': command,
         }
-        commands_.append(Command(**cmd_config))
+        if isinstance(command, dict):
+            cmd_config['device_file'] = command.get('command')
+            if 'entity_type' in command:
+                cmd_config['entity_type'] = command['entity_type']
+            if 'auto_discovery' in command:
+                cmd_config['auto_discovery'] = command['auto_discovery']
+
+        cmd = Command(**cmd_config)
+        if not isinstance(cmd.command, str):
+            logger.error(f'Command {topic}: missing or non-string command!')
+        elif cmd.entity_type not in ('switch', 'button'):
+            logger.error(f'Command {topic}: invalid entity_type!')
+        elif not isinstance(cmd.auto_discovery, bool):
+            logger.error(f'Command {topic}: invalid auto_discovery!')
+        else:
+            commands_.append(cmd)
     return commands_
 
 
