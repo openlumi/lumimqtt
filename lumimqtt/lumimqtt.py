@@ -350,6 +350,8 @@ class LumiMqtt:
             }
             if command.entity_type == 'switch':
                 config['state_topic'] = self._get_topic(command.topic)
+            if command.entity_category is not None:
+                config['entity_category'] = command.entity_category
             await self._client.publish(
                 aio_mqtt.PublishableMessage(
                     topic_name=f'homeassistant/{command.entity_type}/'

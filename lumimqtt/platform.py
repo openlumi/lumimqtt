@@ -97,6 +97,8 @@ def commands(params) -> ty.List[Device]:
                 cmd_config['entity_type'] = command['entity_type']
             if 'auto_discovery' in command:
                 cmd_config['auto_discovery'] = command['auto_discovery']
+            if 'entity_category' in command:
+                cmd_config['entity_category'] = command['entity_category']
 
         cmd = Command(**cmd_config)
         if not isinstance(cmd.command, str):
@@ -105,6 +107,8 @@ def commands(params) -> ty.List[Device]:
             logger.error(f'Command {topic}: invalid entity_type!')
         elif not isinstance(cmd.auto_discovery, bool):
             logger.error(f'Command {topic}: invalid auto_discovery!')
+        elif cmd.entity_category not in (None, 'config', 'diagnostic'):
+            logger.error(f'Command {topic}: invalid entity_category!')
         else:
             commands_.append(cmd)
     return commands_

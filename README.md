@@ -149,6 +149,7 @@ Use an object to set command options. String commands are still supported:
 
 - `command`: required shell command.
 - `entity_type`: `switch` (default) or `button`.
+- `entity_category`: `config` or `diagnostic` (default: no category).
 - `auto_discovery`: `false` disables discovery for this command (default: `true`).
   MQTT commands still work; global discovery must be enabled to publish discovery.
 

@@ -25,11 +25,13 @@ class Command(Device):
             topic,
             entity_type='switch',
             auto_discovery=True,
+            entity_category=None,
     ):
         super().__init__(name, device_file, topic)
         self.command = device_file
         self.entity_type = entity_type
         self.auto_discovery = auto_discovery
+        self.entity_category = entity_category
 
     @property
     def topic_set(self):
