@@ -13,25 +13,20 @@ logger = logging.getLogger(__name__)
 
 
 def read_mac():
-    # We try to read mac address from first interface at first
-    # if the file is absent or empty, use generic uuid.getnode()
-    ifaces = [x for x in sorted(os.listdir('/sys/class/net/')) if x != 'lo']
-    if ifaces:
-        addr_file = f'/sys/class/net/{ifaces[0]}/address'
-        try:
-            with open(addr_file, 'r') as f:
-                mac = f.readline().strip('\n')
-        except FileNotFoundError:
-            pass
-        else:
-            return f"0x{mac.replace(':', '')}"
+    # We try to read the base MAC address from the Wi-Fi PHY first
+    # if the file cannot be read, use generic uuid.getnode()
+    try:
+        with open('/sys/class/ieee80211/phy0/macaddress') as f:
+            mac = f.readline().strip()
+    except OSError:
+        pass
+    else:
+        return f"0x{mac.replace(':', '')}"
 
     mac = get_mac()
     if (mac >> 40) % 2:
         logger.error("Can't get a valid mac, use randomly generated one")
-    mac = hex(mac)
-
-    return mac
+    return hex(mac)
 
 
 def signal_handler():
