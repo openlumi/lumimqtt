@@ -46,12 +46,15 @@ class IlluminanceSensor(Sensor):
     """
     Illuminance sensor
     """
-    COEFFICIENT = 0.25
+    SAMPLE_COUNT = 10
     MQTT_VALUES = {
         'device_class': 'illuminance',
         'unit_of_measurement': 'lx',
     }
 
     def get_value(self):
-        raw_value = self.read_raw()
-        return int(int(raw_value) * self.COEFFICIENT)
+        raw_value = sum(
+            int(self.read_raw()) for _ in range(self.SAMPLE_COUNT)
+        ) // self.SAMPLE_COUNT
+        # Conversion from the original Aqara/Xiaomi firmware.
+        return raw_value * 12000 // 32767
