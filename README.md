@@ -20,7 +20,7 @@ can be overridden with `LUMIMQTT_CONFIG` environment variable.
 | Set light color  | lumi/&lt;ID&gt;/light/set   | {"color": {"r": 255, "g": 0, "b": 0}} |                                                                             |
 | Set brightness   | lumi/&lt;ID&gt;/light/set   | {"brightness": 255}                   |                                                                             |
 | Set color or brigthness with 10 seconds transition | lumi/&lt;ID&gt;/light/set | {"color": {"r": 255, "g": 0, "b": 0}, "brightness": 100, "transition": 10} |        |
-| Read illuminance | lumi/&lt;ID&gt;/illuminance |                                       | 0-1000                                                                      |
+| Read illuminance | lumi/&lt;ID&gt;/illuminance |                                       | 0–1499                                                                      |
 | Button           | lumi/&lt;ID&gt;/btn0/action | | single, double, triple, quadruple, many,<br>hold, double_hold, triple_hold, quadruple_hold, many_hold,<br>release |
 
 

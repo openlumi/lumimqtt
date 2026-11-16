@@ -54,7 +54,7 @@ async def amain():
         'mqtt_tls': False,
         'mqtt_verify_cert': True,
         'auto_discovery': True,  # create homeassistant discovery topics
-        'sensor_threshold': 50,  # 5% of illuminance sensor
+        'sensor_threshold': 50,  # lx
         'sensor_debounce_period': 60,  # 1 minute
         'light_transition_period': 1.0,  # second
         'light_notification_period': 60,  # 1 minute
