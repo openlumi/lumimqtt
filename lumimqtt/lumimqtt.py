@@ -6,9 +6,13 @@ import asyncio as aio
 import json
 import logging
 import typing as ty
-import sys
 from dataclasses import dataclass
 from datetime import datetime
+
+try:
+    import ssl
+except ImportError:
+    ssl = None
 
 import aio_mqtt
 
@@ -495,7 +499,8 @@ class LumiMqtt:
                 if self._mqtt_tls or (
                     self._mqtt_cert is not None and self._mqtt_key is not None
                 ):
-                    import ssl
+                    if ssl is None:
+                        raise ImportError("TLS requires the ssl module")
 
                     context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
                     if not self._mqtt_verify_cert:
@@ -558,7 +563,7 @@ class LumiMqtt:
                 aio_mqtt.ServerDiedError,
             ) as e:
                 if (
-                    'ssl' in sys.modules
+                    ssl is not None
                     and isinstance(e.__cause__, ssl.SSLCertVerificationError)
                 ):
                     logger.error(
