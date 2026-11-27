@@ -124,7 +124,7 @@ the values. Plain text is passed as {text} variable
 {
     <your configuration>,
     "custom_commands": {
-      "blink": "for i in 0 255 0 255 0 255 0; do echo $i > /sys/class/leds/{color}/brightness; sleep 1; done",
+      "blink": "for i in 0 255 0 255 0 255 0; do echo $i > /sys/class/leds/{color}:indicator/brightness; sleep 1; done",
       "tts": "echo \"Test TTS without MPD component for home assistant\" | python3 -c 'from urllib.parse import quote_plus;from sys import stdin;print(\"wget -O /tmp/tts.mp3 -U Mozilla \\\"http://translate.google.com/translate_tts?q=\"+quote_plus(stdin.read()[:100])+\"&ie=UTF-8&tl=en&total=1&idx=0&client=tw-ob&prev=input&ttsspeed=1\\\" && amixer set Master 200 && mpg123 /tmp/tts.mp3\")' | sh 2> /dev/null",
       "tts_interpolate": "echo \"{text}\" | python3 -c 'from urllib.parse import quote_plus;from sys import stdin;print(\"wget -O /tmp/tts.mp3 -U Mozilla \\\"http://translate.google.com/translate_tts?q=\"+quote_plus(stdin.read()[:100])+\"&ie=UTF-8&tl=en&total=1&idx=0&client=tw-ob&prev=input&ttsspeed=1\\\" && amixer set Master {volume} && mpg123 /tmp/tts.mp3\")' | sh 2> /dev/null",
       "restart_lumimqtt": "/etc/init.d/lumimqtt restart",
@@ -132,6 +132,9 @@ the values. Plain text is passed as {text} variable
     }
 }
 ```
+
+If the device tree exposes the LEDs as `red`, `green`, and `blue`, use
+`/sys/class/leds/{color}/brightness` in the `blink` command.
 
 Use an object to set command options. String commands are still supported:
 

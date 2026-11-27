@@ -55,32 +55,14 @@ def buttons() -> ty.List[Device]:
 
 
 def lights() -> ty.List[Device]:
-    led_r = '/sys/class/leds/red'
-    led_g = '/sys/class/leds/green'
-    led_b = '/sys/class/leds/blue'
-
-    led_r_legacy = '/sys/class/backlight/lumi_r'
-    led_g_legacy = '/sys/class/backlight/lumi_g'
-    led_b_legacy = '/sys/class/backlight/lumi_b'
-    if os.path.exists(led_r_legacy):
+    for suffix in (':indicator', ''):
         leds = {
-            'red': led_r_legacy,
-            'green': led_g_legacy,
-            'blue': led_b_legacy,
+            color: f'/sys/class/leds/{color}{suffix}'
+            for color in ('red', 'green', 'blue')
         }
-    else:
-        leds = {
-            'red': led_r,
-            'green': led_g,
-            'blue': led_b,
-        }
-    lights_: ty.List[Device] = []
-    for name, device_dirs in (
-        ('light', leds),
-    ):
-        if all(os.path.exists(f) for f in device_dirs.values()):
-            lights_.append(Light(name=name, devices=device_dirs, topic=name))
-    return lights_
+        if all(os.path.exists(device_dir) for device_dir in leds.values()):
+            return [Light(name='light', devices=leds, topic='light')]
+    return []
 
 
 def commands(params) -> ty.List[Device]:
